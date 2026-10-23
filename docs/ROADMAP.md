@@ -84,7 +84,7 @@ cd trakk
 - [x] FrankenPHP `Dockerfile` + `compose.yaml` + `Caddyfile` per `docs/DEPLOY.md`
 - [x] VPS deploy with HTTPS on a subdomain, scheduler and queue worker running
 - [x] GitHub Action: test on push, deploy on `main`
-- [ ] Passport + `Mcp::oauthRoutes()` + `Mcp::web('/mcp', ...)`; connected as a custom connector in Claude (web and mobile)
+- [x] Passport + `Mcp::oauthRoutes()` + `Mcp::web('/mcp', ...)`; connected as a custom connector in Claude (web and mobile)
 - [ ] PWA manifest and icons
 - [x] Daily Postgres backup
 
