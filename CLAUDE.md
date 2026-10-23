@@ -91,6 +91,8 @@ The approved design must be reproduced exactly. Use the tokens from `docs/DESIGN
 
 ## Working agreements
 
+- **Owner instructions are durable.** Anything the owner states explicitly in a prompt (a layout rule, a tool choice, a removed limit, a workflow) is changed in the code **and** written into the matching doc in the same change: `CLAUDE.md`, `docs/*.md` or `.ai/rules/*`. A prompt-only change will be undone by the next agent, so the docs must say it, phrased as a rule ("never ...", "always ..."). Owner decisions override the prototypes, DESIGN.md and these docs; when they conflict, update the doc instead of reverting the decision.
+
 - Work in vertical slices: migration → model → service + unit test → request/controller/route + feature test → page/components. Follow the `trakk-feature` skill (`.ai/skills/trakk-feature/SKILL.md`).
 - For UI work follow the `trakk-ui` skill (`.ai/skills/trakk-ui/SKILL.md`).
 - After a slice, ask the `reviewer` subagent to check the diff before committing.
