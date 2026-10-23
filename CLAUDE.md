@@ -30,7 +30,8 @@ vendor/bin/pint --dirty          # format changed PHP files
 vendor/bin/phpstan analyse       # static analysis
 npm run types                    # TypeScript check (tsc --noEmit)
 npm run check                    # lint + format check (Vite+); `npm run check:fix` to fix
-npx vp check --fix resources/js  # scoped fix; never run it repo-wide, it reformats docs and prototypes
+npx vp check --fix resources/js  # scoped fix; never run it repo-wide, it reformats prototypes
+                                 # (Markdown, `docs/`, `.ai/` and `compose.yaml` are ignored by the formatter in `vite.config.ts`: never reformat docs to satisfy it)
 php artisan migrate:fresh --seed # reset local DB with demo data that mirrors the prototype
 php artisan mcp:inspector trakk  # inspect the local MCP server
 ```

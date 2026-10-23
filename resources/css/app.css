@@ -98,7 +98,8 @@
 
 /* Trakk design tokens (docs/DESIGN.md) */
 @theme {
-    --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-sans:
+        'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
     /* surfaces */
