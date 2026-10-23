@@ -6,6 +6,7 @@ import type {
     LogEntry,
     Pace,
     Priority,
+    ReminderForm,
     Tone,
 } from './trakk';
 
@@ -116,6 +117,7 @@ export type ReminderItem = {
     frequencyLabel: string;
     channelsLabel: string;
     isActive: boolean;
+    form: ReminderForm;
 };
 
 export type FocusProject = {

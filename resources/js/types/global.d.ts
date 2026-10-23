@@ -1,5 +1,6 @@
 import type { Auth } from '@/types/auth';
 import type { TopBarData } from '@/types/dashboard';
+import type { CommandIndex, SheetOptions } from '@/types/sheets';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -14,6 +15,8 @@ declare module '@inertiajs/core' {
             version: string;
             auth: Auth;
             topBar: TopBarData | null;
+            sheetOptions: SheetOptions | null;
+            commandIndex?: CommandIndex | null;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

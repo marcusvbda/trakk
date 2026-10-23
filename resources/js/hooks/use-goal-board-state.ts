@@ -1,9 +1,18 @@
-import { useState } from 'react';
-import { formatMinutes, percentOf } from '@/lib/format';
+import { router } from '@inertiajs/react';
+import { formatMinutes } from '@/lib/format';
 import { moveCardBetweenColumns, taskStatusLabel } from '@/lib/kanban';
+import { update as setTaskStatus } from '@/routes/tasks/status';
 import type { GoalDetailProps, LogEntry, TaskStatus } from '@/types';
 
-const maxHistoryEntries = 8;
+const maxHistoryEntries = 20;
+
+const refreshAfterTaskChange = [
+    'goal',
+    'progress',
+    'paceChart',
+    'board',
+    'history',
+];
 
 function historyKind(to: TaskStatus): LogEntry['kind'] {
     if (to === 'done') {
@@ -13,13 +22,9 @@ function historyKind(to: TaskStatus): LogEntry['kind'] {
     return to === 'todo' ? 'reopened' : 'sent';
 }
 
-// Mock-phase interactions: counts and percent move to the server in M4.
 export function useGoalBoardState(props: GoalDetailProps) {
-    const [columns, setColumns] = useState(props.board.columns);
-    const [history, setHistory] = useState(props.history);
-
     function moveTask(cardId: number, from: TaskStatus, to: TaskStatus) {
-        const card = columns
+        const card = props.board?.columns
             .find((column) => column.status === from)
             ?.cards.find((candidate) => candidate.id === cardId);
 
@@ -27,42 +32,37 @@ export function useGoalBoardState(props: GoalDetailProps) {
             return;
         }
 
-        setColumns((current) =>
-            moveCardBetweenColumns(current, cardId, from, to),
-        );
-        setHistory((entries) =>
-            [
-                {
-                    id: -Date.now(),
-                    timeLabel: `today ${formatMinutes(new Date())}`,
-                    kind: historyKind(to),
-                    text: `${card.title.toLowerCase()} → ${taskStatusLabel[to]}`,
-                    trailing: null,
-                },
-                ...entries,
-            ].slice(0, maxHistoryEntries),
-        );
+        router
+            .optimistic<GoalDetailProps>((current) =>
+                current.board
+                    ? {
+                          board: {
+                              columns: moveCardBetweenColumns(
+                                  current.board.columns,
+                                  cardId,
+                                  from,
+                                  to,
+                              ),
+                          },
+                          history: [
+                              {
+                                  id: -Date.now(),
+                                  timeLabel: formatMinutes(new Date()),
+                                  kind: historyKind(to),
+                                  text: `${card.title.toLowerCase()} → ${taskStatusLabel[to]}`,
+                                  trailing: null,
+                              },
+                              ...current.history,
+                          ].slice(0, maxHistoryEntries),
+                      }
+                    : {},
+            )
+            .patch(
+                setTaskStatus.url(cardId),
+                { status: to },
+                { preserveScroll: true, only: refreshAfterTaskChange },
+            );
     }
 
-    const countOf = (status: TaskStatus) =>
-        columns.find((column) => column.status === status)?.cards.length ?? 0;
-    const doneCount = countOf('done');
-    const overdueCount = columns
-        .filter((column) => column.status !== 'done')
-        .flatMap((column) => column.cards)
-        .filter((card) => card.isOverdue).length;
-
-    return {
-        columns,
-        history,
-        moveTask,
-        counts: {
-            todo: countOf('todo'),
-            doing: countOf('doing'),
-            done: doneCount,
-        },
-        doneCount,
-        percent: Math.round(percentOf(doneCount, props.progress.totalCount)),
-        overdueCount,
-    };
+    return { moveTask };
 }

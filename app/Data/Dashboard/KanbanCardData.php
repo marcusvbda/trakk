@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Data\Dashboard;
 
+use App\Data\TaskSheetData;
+
 final readonly class KanbanCardData
 {
     public function __construct(
@@ -14,5 +16,6 @@ final readonly class KanbanCardData
         public int $checklistTotal,
         public bool $isOverdue,
         public ?string $tag,
+        public TaskSheetData $task,
     ) {}
 }

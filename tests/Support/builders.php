@@ -50,6 +50,25 @@ function projectGoal(string $start, string $due, int $done, int $total): Goal
 }
 
 /**
+ * A project whose done tasks were each completed on one of `$doneDates`, with the rest still to do.
+ *
+ * @param  list<string>  $doneDates
+ */
+function projectGoalDoneOn(string $start, string $due, int $total, array $doneDates): Goal
+{
+    $goal = new Goal(['type' => GoalType::Project, 'start_date' => $start, 'due_date' => $due, 'target_per_week' => null]);
+
+    $tasks = collect(range(1, max($total, 1)))->take($total)->map(function (int $index) use ($doneDates): Task {
+        $doneOn = $doneDates[$index - 1] ?? null;
+        $task = new Task(['status' => $doneOn === null ? TaskStatus::Todo : TaskStatus::Done, 'points' => 1]);
+
+        return $task->setRelation('completions', collect($doneOn === null ? [] : [new Completion(['completed_on' => $doneOn, 'points' => 1])]));
+    });
+
+    return $goal->setRelation('tasks', $tasks->values());
+}
+
+/**
  * @param  list<string>  $completionDates  one completion per date on the goal's single task
  */
 function habitGoal(string $start, string $due, int $perWeek, array $completionDates, int $tasks = 1): Goal

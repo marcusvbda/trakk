@@ -1,8 +1,14 @@
-import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { router, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import type { GoalFilter } from '@/components/trakk/goal-filter-tabs';
+import type { DashboardSheet } from '@/lib/dashboard-sheet';
+import {
+    dashboardSheetEvent,
+    requestedDashboardSheet,
+} from '@/lib/dashboard-sheet';
 import { formatMinutes, percentOf } from '@/lib/format';
 import { moveCardBetweenColumns, taskStatusLabel } from '@/lib/kanban';
+import { dashboard } from '@/routes';
 import { update as setReminderActive } from '@/routes/reminders/active';
 import {
     destroy as undoCompletion,
@@ -39,8 +45,6 @@ const refreshAfterTaskChange = [
 
 const refreshAfterReminderToggle = ['reminders', 'log', 'status'];
 
-export type DashboardSheet = 'replan' | 'check-in';
-
 function matchesFilter(goal: GoalSummary, filter: GoalFilter): boolean {
     switch (filter) {
         case 'habit':
@@ -70,7 +74,27 @@ function withLogLine(
 
 export function useDashboardState(props: DashboardProps) {
     const [filter, setFilter] = useState<GoalFilter>('all');
-    const [sheet, setSheet] = useState<DashboardSheet | null>(null);
+    const { url } = usePage();
+    const [requested] = useState(() => requestedDashboardSheet(url));
+    const [sheet, setSheet] = useState<DashboardSheet | null>(requested);
+
+    useEffect(() => {
+        if (requested) {
+            window.history.replaceState(
+                window.history.state,
+                '',
+                dashboard.url(),
+            );
+        }
+
+        function open(event: Event) {
+            setSheet((event as CustomEvent<DashboardSheet>).detail);
+        }
+
+        window.addEventListener(dashboardSheetEvent, open);
+
+        return () => window.removeEventListener(dashboardSheetEvent, open);
+    }, [requested]);
 
     function toggleAction(action: TodayAction) {
         const wasDone = action.isDone;

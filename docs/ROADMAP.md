@@ -64,7 +64,7 @@ cd trakk
 
 ## M3a — Mocked screens
 
-Login, dashboard and goal detail were first built against PHP mocks. M3 replaced the dashboard and top bar mocks with `DashboardService` and `TopBarService`; `GoalDetailMock` and the local sums in `use-goal-board-state.ts` stay until M4 (S3).
+Login, dashboard and goal detail were first built against PHP mocks. M3 replaced the dashboard and top bar mocks with `DashboardService` and `TopBarService`; `GoalDetailService` (M4) replaced `GoalDetailMock` and the local sums in `use-goal-board-state.ts`.
 
 - [x] `AuthLayout`, `LogoMark`, `TextField` and the sign-in screen (real Fortify login, error and throttle states)
 - [x] UI primitives (`Panel`, `PanelHeader`, `Chip`, `ProgressBar`, `TrakkButton`, `TrakkCheckbox`, `TrakkToggle`) and `TrakkLayout`
@@ -75,16 +75,16 @@ Login, dashboard and goal detail were first built against PHP mocks. M3 replaced
 
 ## M4 — Goals and boards
 
-- [ ] Create / edit goal form (all fields from PRODUCT.md, color picker limited to the goal palette)
-- [ ] Goal detail page identical to `docs/design/reference/goal-desktop.png` and `goal-mobile.png`
-- [ ] Tasks: create, edit, delete, recurrence, points, due date, tag
-- [ ] Kanban moves (advance / reopen) with feature tests
-- [ ] Checklist items
-- [ ] Focus project on the dashboard (most behind active project)
+- [x] Create / edit goal form (all fields from PRODUCT.md, color picker limited to the goal palette), status and delete, and the `/goals` list
+- [x] Goal detail page identical to `docs/design/reference/goal-desktop.png` and `goal-mobile.png` (real data; deviations: the global top bar, the seed's own title and tasks)
+- [x] Tasks: create, edit, delete, recurrence, points, due date, tag
+- [x] Kanban moves (advance / reopen) with feature tests
+- [x] Checklist items
+- [x] Focus project on the dashboard (most behind active project)
 
 ## M5 — Reminders and MCP (local)
 
-- [ ] Reminders CRUD and toggle
+- [x] Reminders CRUD and toggle
 - [ ] `TelegramClient`, `SendReminder` job, `reminders:dispatch` every minute, daily overdue scan
 - [ ] Message templates for each reminder kind
 - [ ] `TrakkServer` with `get-today`, `list-goals`, `complete-task`, `create-task`, `move-task`, `create-goal`, tests for each
@@ -102,6 +102,6 @@ Login, dashboard and goal detail were first built against PHP mocks. M3 replaced
 ## Later
 
 - Mobile "Today" screen designed for the phone
-- Command bar actions (⌘K: log, search, ask)
+- Command bar "ask" (⌘K asks Claude; search and commands are done)
 - Inbound Telegram commands (check in by replying)
 - Weekly review page

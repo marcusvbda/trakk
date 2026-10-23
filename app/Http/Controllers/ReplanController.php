@@ -7,7 +7,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ReplanRequest;
 use App\Services\Tasks\TaskService;
 use App\Support\Clock;
+use App\Support\Toast;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 
 final class ReplanController extends Controller
 {
@@ -18,7 +20,11 @@ final class ReplanController extends Controller
 
     public function store(ReplanRequest $request): RedirectResponse
     {
-        $this->tasks->replan($request->tasks(), $request->toData(), $this->clock->today($request->user()));
+        $tasks = $request->tasks();
+
+        $this->tasks->replan($tasks, $request->toData(), $this->clock->today($request->user()));
+
+        Toast::success($tasks->count().' '.Str::plural('task', $tasks->count()).' replanned');
 
         return back();
     }

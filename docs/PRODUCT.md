@@ -79,7 +79,17 @@ The rules below live in services and are covered by tests. The dashboard assembl
 - Status: `delta ≤ −5` → **behind** (danger) · `−5 < delta < 0` → **watch** (warning) · `0 ≤ delta < 5` → **on pace** · `delta ≥ 5` → **ahead**.
 - "Goals on pace" KPI counts goals with `delta ≥ 0`.
 - **Projection at due date:** `progress + (progress / elapsed days) × remaining days`, capped at 100. Shown on the goal page.
-- **Current pace** (projects): done tasks per week since start, one decimal (0 before the start). **Required pace:** remaining tasks / remaining weeks, one decimal; at least one day remains, so the figure stays finite after the due date.
+- **Current pace:** done tasks per week since start (projects) or hit days per week (habits), one decimal (0 before the start). **Required pace:** remaining tasks (projects) or remaining planned hit days (habits) per remaining week, one decimal; at least one day remains, so the figure stays finite after the due date. The goal page labels them `tasks/wk` or `days/wk`.
+
+### Goal page
+
+- **Pace chart.** The actual line has five samples evenly spaced from the start day to today, both included (fewer when little time has passed: a sample day never repeats). The percent at a sample day is the progress counting only what was done up to that day: a project task counts from the day of its completion, a habit counts hit days up to it; the last sample is today's real progress. Month ticks are the first of each month inside the window, dropping any that sits closer than 18% of the window to the previous tick, the start or the due date (a goal from 01 jul to 15 jan shows `sep` and `nov`).
+- **Chart captions.** Before the start the chart says `starts in N days`; a started project without tasks says `add tasks to measure progress`. The axes and the expected line are always drawn.
+- **Board or actions.** A project shows its tasks on the board, every task, by status and `position`. A habit shows its recurring tasks instead: title, weekday chips, time, points and `hits/planned this week`. One-off tasks of a habit goal are not listed there.
+- **Progress panel.** Projects: percent, done/total tasks and tasks per status. Habits: percent, hit days / planned days and the week dots.
+- **Reminders of the goal** list recurring ones first, then once-only ones, each in creation order. **History** is the latest 20 activities of the goal.
+- **Facts.** `remaining` is the days left to the due date (0 once past); `overdue` counts the goal's overdue tasks; the frequency shows only for habits.
+- **Slug.** A goal URL resolves the slug among the signed-in user's goals only; two users can share a slug.
 
 ### Points
 

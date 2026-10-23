@@ -5,18 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Dashboard;
 
 use App\Data\Dashboard\FocusProjectData;
-use App\Data\Dashboard\KanbanCardData;
-use App\Data\Dashboard\KanbanColumnData;
 use App\Enums\GoalType;
 use App\Enums\TaskStatus;
-use App\Models\ChecklistItem;
 use App\Models\Goal;
-use App\Models\Task;
 use App\Services\Goals\GoalProgressService;
+use App\Services\Tasks\KanbanBuilder;
 use App\Support\Labels;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
-use stdClass;
 
 final class FocusProjectService
 {
@@ -24,6 +20,7 @@ final class FocusProjectService
 
     public function __construct(
         private readonly GoalProgressService $progress,
+        private readonly KanbanBuilder $kanban,
         private readonly Labels $labels,
     ) {}
 
@@ -46,8 +43,7 @@ final class FocusProjectService
             return null;
         }
 
-        $checklists = $this->checklistCounts($goal->tasks);
-        $progress = $this->progress->progress($goal);
+        $goal->tasks->load('checklistItems');
 
         return new FocusProjectData(
             $goal->slug,
@@ -55,53 +51,8 @@ final class FocusProjectService
             $goal->color,
             $goal->tasks->where('status', TaskStatus::Done)->count(),
             $goal->tasks->count(),
-            $progress,
-            array_map(
-                fn (TaskStatus $status): KanbanColumnData => $this->column($goal->tasks, $status, $checklists, $today),
-                TaskStatus::cases(),
-            ),
+            $this->progress->progress($goal),
+            $this->kanban->columns($goal->tasks, $today, self::CARDS_PER_COLUMN),
         );
-    }
-
-    /**
-     * @param  Collection<int, Task>  $tasks
-     * @param  Collection<int, stdClass>  $checklists  per task: `total` and `done` checklist items
-     */
-    private function column(Collection $tasks, TaskStatus $status, Collection $checklists, CarbonImmutable $today): KanbanColumnData
-    {
-        $inColumn = $tasks->where('status', $status)->sortBy('position')->values();
-
-        return new KanbanColumnData(
-            $status,
-            max(0, $inColumn->count() - self::CARDS_PER_COLUMN),
-            $inColumn
-                ->take(self::CARDS_PER_COLUMN)
-                ->map(fn (Task $task): KanbanCardData => new KanbanCardData(
-                    $task->id,
-                    $task->title,
-                    $task->due_date === null ? null : $this->labels->shortDate($task->due_date),
-                    (int) ($checklists->get($task->id)->done ?? 0),
-                    (int) ($checklists->get($task->id)->total ?? 0),
-                    $task->isOverdueOn($today),
-                    $task->tag,
-                ))
-                ->values()
-                ->all(),
-        );
-    }
-
-    /**
-     * @param  Collection<int, Task>  $tasks
-     * @return Collection<int, stdClass>
-     */
-    private function checklistCounts(Collection $tasks): Collection
-    {
-        return ChecklistItem::query()
-            ->whereIn('task_id', $tasks->pluck('id'))
-            ->selectRaw('task_id, count(*) as total, count(*) filter (where is_done) as done')
-            ->groupBy('task_id')
-            ->toBase()
-            ->get()
-            ->keyBy('task_id');
     }
 }

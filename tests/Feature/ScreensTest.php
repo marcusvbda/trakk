@@ -22,7 +22,7 @@ it('renders the dashboard for the owner', function () {
 });
 
 it('renders the goal detail for the owner', function () {
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(seedDemoOwner())
         ->get(route('goals.show', 'nomad-visa'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('goals/show')

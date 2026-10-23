@@ -9,6 +9,8 @@ export type GoalColor =
 
 export type GoalType = 'habit' | 'project';
 
+export type GoalStatus = 'active' | 'paused' | 'done' | 'abandoned';
+
 export type Priority = 'high' | 'medium' | 'low';
 
 export type PaceStatus = 'behind' | 'watch' | 'on_pace' | 'ahead';
@@ -29,6 +31,30 @@ export type Tone =
 
 export type TaskStatus = 'todo' | 'doing' | 'done';
 
+export type ReminderKind =
+    | 'daily_brief'
+    | 'evening_checkin'
+    | 'due_tomorrow'
+    | 'weekly_review'
+    | 'off_pace'
+    | 'pace_summary'
+    | 'deadline_alert'
+    | 'custom';
+
+export type ReminderChannel = 'telegram' | 'email';
+
+export type ReminderForm = {
+    id: number;
+    kind: ReminderKind;
+    label: string;
+    time: string;
+    daysOfWeek: number[] | null;
+    fireOn: string | null;
+    goalId: number | null;
+    channels: ReminderChannel[];
+    isActive: boolean;
+};
+
 export type DayState = 'done' | 'missed' | 'upcoming';
 
 export type LogKind =
@@ -47,6 +73,26 @@ export type LogEntry = {
     trailing: string | null;
 };
 
+export type ChecklistItem = {
+    id: number;
+    title: string;
+    isDone: boolean;
+};
+
+export type TaskSheet = {
+    id: number;
+    goalId: number;
+    title: string;
+    points: number;
+    status: TaskStatus | null;
+    dueDate: string | null;
+    scheduledTime: string | null;
+    daysOfWeek: number[] | null;
+    tag: string | null;
+    notes: string | null;
+    checklist: ChecklistItem[];
+};
+
 export type KanbanCardData = {
     id: number;
     title: string;
@@ -54,7 +100,8 @@ export type KanbanCardData = {
     checklistDone: number;
     checklistTotal: number;
     isOverdue: boolean;
-    tag?: string | null;
+    tag: string | null;
+    task: TaskSheet;
 };
 
 export type KanbanColumnData = {

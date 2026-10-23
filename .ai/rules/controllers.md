@@ -11,6 +11,7 @@ paths:
 - Resourceful methods only (`index`, `show`, `create`, `store`, `edit`, `update`, `destroy`). Anything else becomes its own controller: `TaskStatusController@update`, `CompletionController@store/destroy`.
 - Shape of every write action: authorize → `$request->toData()` → one service call → `redirect()->back()` or `to_route(...)`. Around 5 lines.
 - Shape of every page action: authorize → one service/read-model call → `Inertia::render('goals/show', [...Resources])`.
+- Every write action that creates, changes, deletes or sends something calls `Toast::success('...')` (`App\Support\Toast`) before returning, so the owner always sees what happened (owner decision). Messages are short, lowercase and say the outcome: `goal created`, `task saved`, `reminder deleted`. Quick interactions that already show their result on screen stay silent: checking or unchecking an action, moving a card, ticking a checklist item. A failed validation shows its errors under the fields, not a toast.
 - No Eloquent queries, no business rules, no loops, no `DB::` in controllers. Route-model binding is fine.
 - Authorization through policies (`Gate::authorize('update', $goal)` or `$this->authorize`). Scope every lookup to the current user.
 

@@ -1,9 +1,10 @@
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { LogoMark } from '@/components/trakk/logo-mark';
 import { UserMenu } from '@/components/trakk/user-menu';
 import { Chip } from '@/components/ui/chip';
 import { useClock } from '@/hooks/use-clock';
 import { formatClock } from '@/lib/format';
+import { dashboard } from '@/routes';
 import type { TopBarData } from '@/types';
 
 export function TopBar({
@@ -19,10 +20,16 @@ export function TopBar({
     return (
         <header className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-divider pt-3.5 pb-3">
             <div className="flex items-center gap-2.5">
-                <LogoMark size={18} />
-                <span className="font-mono text-md font-medium tracking-[0.04em] text-fg">
-                    ~/{name.toLowerCase()}
-                </span>
+                <Link
+                    href={dashboard()}
+                    aria-label={`${name} dashboard`}
+                    className="flex min-h-11 items-center gap-2.5 text-fg transition-colors duration-150 hover:text-accent-hover"
+                >
+                    <LogoMark size={18} />
+                    <span className="font-mono text-md font-medium tracking-[0.04em]">
+                        ~/{name.toLowerCase()}
+                    </span>
+                </Link>
                 <Chip size="plain" tone="faint">
                     v{version}
                 </Chip>

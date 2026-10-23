@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Activity\CheckInService;
 use App\Support\Clock;
+use App\Support\Toast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -20,7 +21,9 @@ final class CheckInController extends Controller
     {
         $user = $request->user();
 
-        $this->checkIns->closeDay($user, $this->clock->today($user));
+        $checkIn = $this->checkIns->closeDay($user, $this->clock->today($user));
+
+        Toast::success($checkIn->message);
 
         return back();
     }

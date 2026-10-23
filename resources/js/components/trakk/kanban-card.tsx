@@ -11,6 +11,7 @@ type KanbanCardProps = {
     moveGlyph: string;
     isFull: boolean;
     onMove: () => void;
+    onOpen: () => void;
 };
 
 function dueText(card: KanbanCardData, isDone: boolean): string {
@@ -32,6 +33,7 @@ export function KanbanCard({
     moveGlyph,
     isFull,
     onMove,
+    onOpen,
 }: KanbanCardProps) {
     const isDone = status === 'done';
     const isLate = card.isOverdue && !isDone;
@@ -47,16 +49,21 @@ export function KanbanCard({
                     : 'border-line hover:border-line-hover',
             )}
         >
-            <div className="min-w-0 flex-1">
-                <div
+            <button
+                type="button"
+                aria-label={`Edit task "${card.title}"`}
+                onClick={onOpen}
+                className="min-w-0 flex-1 text-left"
+            >
+                <span
                     className={cn(
-                        'text-[12px] leading-[1.35]',
+                        'block text-[12px] leading-[1.35]',
                         isDone ? 'text-faint line-through' : 'text-body',
                     )}
                 >
                     {card.title}
-                </div>
-                <div
+                </span>
+                <span
                     className={cn(
                         'mt-[5px] flex gap-x-2 font-mono text-2xs text-muted',
                         isFull && 'flex-wrap gap-y-1',
@@ -71,7 +78,7 @@ export function KanbanCard({
                     {card.tag && !isDone && (
                         <span className="text-warning">{card.tag}</span>
                     )}
-                </div>
+                </span>
                 {isFull && (
                     <ProgressBar
                         size="xs"
@@ -86,7 +93,7 @@ export function KanbanCard({
                         }
                     />
                 )}
-            </div>
+            </button>
             {moveLabel && (
                 <TrakkButton
                     size="icon"

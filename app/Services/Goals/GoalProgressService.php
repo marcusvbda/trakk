@@ -16,7 +16,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 /**
- * Pure calculator: expects `$goal->tasks` loaded, and for habits `tasks.completions` too.
+ * Pure calculator: expects `$goal->tasks` loaded, and `tasks.completions` for habits and for `progressOn()`.
  */
 final class GoalProgressService
 {
@@ -26,7 +26,13 @@ final class GoalProgressService
 
     public function progress(Goal $goal): int
     {
-        return $goal->isHabit() ? $this->habitProgress($goal) : $this->projectProgress($goal);
+        return $this->progressOn($goal, null);
+    }
+
+    /** Progress counting only what was done up to and including `$day`; `null` counts everything. */
+    public function progressOn(Goal $goal, ?CarbonImmutable $day): int
+    {
+        return $goal->isHabit() ? $this->habitProgress($goal, $day) : $this->projectProgress($goal, $day);
     }
 
     public function expected(Goal $goal, CarbonImmutable $today): int
@@ -58,7 +64,7 @@ final class GoalProgressService
         return min(100, (int) round($progress + $progress / $elapsed * $remaining));
     }
 
-    /** Tasks done per week since the start (projects). */
+    /** Tasks (projects) or hit days (habits) done per week since the start. */
     public function currentPace(Goal $goal, CarbonImmutable $today): float
     {
         $elapsed = $this->elapsedDays($goal, $today);
@@ -67,16 +73,34 @@ final class GoalProgressService
             return 0.0;
         }
 
-        return round($this->doneTaskCount($goal) / ($elapsed / 7), 1);
+        return round($this->doneUnitCount($goal) / ($elapsed / 7), 1);
     }
 
-    /** Tasks per week still needed to finish by the due date (projects). Counts at least one remaining day. */
+    /** Tasks (projects) or hit days (habits) per week still needed to finish by the due date. Counts at least one remaining day. */
     public function requiredPace(Goal $goal, CarbonImmutable $today): float
     {
         $remainingDays = max(1, $this->totalDays($goal) - $this->elapsedDays($goal, $today));
-        $remainingTasks = $goal->tasks->count() - $this->doneTaskCount($goal);
+        $remainingUnits = max(0, $this->totalUnitCount($goal) - $this->doneUnitCount($goal));
 
-        return round($remainingTasks / ($remainingDays / 7), 1);
+        return round($remainingUnits / ($remainingDays / 7), 1);
+    }
+
+    /** Distinct days with at least one completion between the start and `$day` (the due date when `null`). */
+    public function hitDayCount(Goal $goal, ?CarbonImmutable $day = null): int
+    {
+        $until = $day === null ? $goal->due_date : $day->min($goal->due_date);
+
+        return $this->completions($goal)
+            ->filter(fn (Completion $completion): bool => $completion->completed_on->betweenIncluded($goal->start_date, $until))
+            ->map(fn (Completion $completion): string => $completion->completed_on->toDateString())
+            ->unique()
+            ->count();
+    }
+
+    /** Hit days the habit plans over its whole window: the weekly target times the weeks in the window. */
+    public function plannedDayCount(Goal $goal): int
+    {
+        return (int) round($this->plannedDays($goal));
     }
 
     /** Monday to Sunday of the current week: which days had at least one completion. */
@@ -102,33 +126,55 @@ final class GoalProgressService
         return new WeekDots($days, $doneCount, $goal->target_per_week ?? 0);
     }
 
-    private function projectProgress(Goal $goal): int
+    private function projectProgress(Goal $goal, ?CarbonImmutable $day): int
     {
         $total = $goal->tasks->count();
 
-        return $total === 0 ? 0 : (int) round($this->doneTaskCount($goal) / $total * 100);
+        return $total === 0 ? 0 : (int) round($this->doneTaskCount($goal, $day) / $total * 100);
     }
 
-    private function habitProgress(Goal $goal): int
+    private function habitProgress(Goal $goal, ?CarbonImmutable $day): int
     {
-        $plannedDays = ($goal->target_per_week ?? 0) * $this->totalDays($goal) / 7;
+        $plannedDays = $this->plannedDays($goal);
 
         if ($plannedDays <= 0) {
             return 0;
         }
 
-        $hitDays = $this->completions($goal)
-            ->filter(fn (Completion $completion): bool => $completion->completed_on->betweenIncluded($goal->start_date, $goal->due_date))
-            ->map(fn (Completion $completion): string => $completion->completed_on->toDateString())
-            ->unique()
-            ->count();
-
-        return min(100, (int) round($hitDays / $plannedDays * 100));
+        return min(100, (int) round($this->hitDayCount($goal, $day) / $plannedDays * 100));
     }
 
-    private function doneTaskCount(Goal $goal): int
+    private function plannedDays(Goal $goal): float
     {
-        return $goal->tasks->filter(fn (Task $task): bool => $task->status === TaskStatus::Done)->count();
+        return ($goal->target_per_week ?? 0) * $this->totalDays($goal) / 7;
+    }
+
+    private function doneUnitCount(Goal $goal): int
+    {
+        return $goal->isHabit() ? $this->hitDayCount($goal) : $this->doneTaskCount($goal);
+    }
+
+    private function totalUnitCount(Goal $goal): int
+    {
+        return $goal->isHabit() ? $this->plannedDayCount($goal) : $goal->tasks->count();
+    }
+
+    private function doneTaskCount(Goal $goal, ?CarbonImmutable $day = null): int
+    {
+        return $goal->tasks
+            ->filter(fn (Task $task): bool => $task->status === TaskStatus::Done && $this->wasDoneBy($task, $day))
+            ->count();
+    }
+
+    private function wasDoneBy(Task $task, ?CarbonImmutable $day): bool
+    {
+        if ($day === null) {
+            return true;
+        }
+
+        $doneOn = $task->completions->min('completed_on') ?? $task->completed_at?->startOfDay();
+
+        return $doneOn !== null && $doneOn->lessThanOrEqualTo($day);
     }
 
     /**
@@ -139,12 +185,12 @@ final class GoalProgressService
         return $goal->tasks->flatMap(fn (Task $task) => $task->completions)->values();
     }
 
-    private function totalDays(Goal $goal): int
+    public function totalDays(Goal $goal): int
     {
         return max(1, (int) $goal->start_date->diffInDays($goal->due_date));
     }
 
-    private function elapsedDays(Goal $goal, CarbonImmutable $today): int
+    public function elapsedDays(Goal $goal, CarbonImmutable $today): int
     {
         return max(0, min($this->totalDays($goal), (int) $goal->start_date->diffInDays($today, false)));
     }

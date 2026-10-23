@@ -14,15 +14,15 @@ use App\Data\Dashboard\PointsChartData;
 use App\Data\Dashboard\PointsDayData;
 use App\Data\Dashboard\ReminderItemData;
 use App\Data\DayScore;
-use App\Enums\ActivityType;
 use App\Enums\TaskStatus;
-use App\Models\Activity;
 use App\Models\Completion;
 use App\Models\Goal;
 use App\Models\Reminder;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Activity\LogEntryBuilder;
 use App\Services\Goals\GoalProgressService;
+use App\Services\Reminders\ReminderFormBuilder;
 use App\Services\Scoring\ConsistencyService;
 use App\Services\Scoring\ScoreService;
 use App\Services\Scoring\StreakService;
@@ -55,6 +55,8 @@ final class DashboardService
         private readonly SuggestionService $suggestions,
         private readonly FocusProjectService $focusProject,
         private readonly StatusLineService $statusLine,
+        private readonly LogEntryBuilder $logEntries,
+        private readonly ReminderFormBuilder $reminderForms,
         private readonly Labels $labels,
     ) {}
 
@@ -194,6 +196,7 @@ final class DashboardService
             $this->labels->reminderFrequency($reminder),
             $this->labels->reminderChannels($reminder),
             $reminder->is_active,
+            $this->reminderForms->build($reminder),
         );
     }
 
@@ -202,28 +205,10 @@ final class DashboardService
      */
     private function log(User $user, CarbonImmutable $today): array
     {
-        return $user->activities()
-            ->latest('occurred_at')
-            ->latest('id')
-            ->limit(self::LOG_ENTRIES)
-            ->get()
-            ->map(fn (Activity $activity): LogEntryData => new LogEntryData(
-                $activity->id,
-                $this->labels->logTime($activity->occurred_at, $user->timezone, $today),
-                $activity->type->logKind(),
-                $activity->message,
-                $this->trailing($activity),
-            ))
-            ->values()
-            ->all();
-    }
-
-    private function trailing(Activity $activity): ?string
-    {
-        return match ($activity->type) {
-            ActivityType::TaskCompleted => $activity->points === null ? null : '+'.$activity->points,
-            ActivityType::CheckIn => ($activity->meta['score'] ?? '?').'/'.($activity->meta['target'] ?? '?'),
-            default => null,
-        };
+        return $this->logEntries->entries(
+            $user->activities()->latest('occurred_at')->latest('id')->limit(self::LOG_ENTRIES)->get(),
+            $user->timezone,
+            $today,
+        );
     }
 }

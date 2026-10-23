@@ -2,9 +2,14 @@ import { Link } from '@inertiajs/react';
 import { LiveDot } from '@/components/trakk/live-dot';
 import { TopBarSlot } from '@/components/trakk/top-bar-slot';
 import { TrakkButton } from '@/components/ui/trakk-button';
+import { useSheets } from '@/hooks/use-sheets';
 import { dashboard } from '@/routes';
+import { index } from '@/routes/goals';
+import type { GoalForm } from '@/types';
 
-export function GoalHeader({ slug }: { slug: string }) {
+export function GoalHeader({ form }: { form: GoalForm }) {
+    const sheets = useSheets();
+
     return (
         <>
             <TopBarSlot>
@@ -13,8 +18,21 @@ export function GoalHeader({ slug }: { slug: string }) {
                         <LiveDot />
                         synced
                     </span>
-                    <TrakkButton>edit</TrakkButton>
-                    <TrakkButton variant="accent">+ task</TrakkButton>
+                    <TrakkButton
+                        onClick={() =>
+                            sheets.open({ kind: 'goal', goal: form })
+                        }
+                    >
+                        edit
+                    </TrakkButton>
+                    <TrakkButton
+                        variant="accent"
+                        onClick={() =>
+                            sheets.open({ kind: 'task', goalSlug: form.slug })
+                        }
+                    >
+                        + task
+                    </TrakkButton>
                 </div>
             </TopBarSlot>
             <nav
@@ -28,9 +46,14 @@ export function GoalHeader({ slug }: { slug: string }) {
                     ← dashboard
                 </Link>
                 <span>/</span>
-                <span>goals</span>
+                <Link
+                    href={index()}
+                    className="text-accent-soft hover:text-accent-hover"
+                >
+                    goals
+                </Link>
                 <span>/</span>
-                <span className="text-fg">{slug}</span>
+                <span className="text-fg">{form.slug}</span>
             </nav>
         </>
     );

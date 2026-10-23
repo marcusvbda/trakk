@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Data\Dashboard;
 
+use App\Data\ReminderFormData;
+
 final readonly class ReminderItemData
 {
     public function __construct(
@@ -13,5 +15,6 @@ final readonly class ReminderItemData
         public string $frequencyLabel,
         public string $channelsLabel,
         public bool $isActive,
+        public ReminderFormData $form,
     ) {}
 }

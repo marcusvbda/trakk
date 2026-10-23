@@ -125,6 +125,8 @@ PATCH  /reminders/{reminder}/active        ReminderActiveController@update
 POST   /settings/telegram/test             TelegramTestController@store
 ```
 
+`{goal:slug}` resolves among the signed-in user's goals only (a binding in `AppServiceProvider`), so a slug another user owns is a 404.
+
 All behind `auth`, policies on every bound model, redirects back with `preserveScroll`. Sheets are not routes: they open over the current page and submit with Inertia `<Form>` / `useForm`.
 
 ## New surfaces (UI)
@@ -133,7 +135,7 @@ Build with existing tokens and components (`Panel`, `PanelHeader`, `TextField`, 
 
 - **Sheet** (`components/trakk/sheet.tsx`, built on `components/ui/sheet`): right side, 440px wide (full width under 480px), `surface` background, 1px `line` left border, no shadow, no overlay blur (overlay `canvas` at 70% opacity). Header like `PanelHeader` (mono uppercase title, `esc` hint, close button 44px). Body padding 16px, fields gap 14px. Footer pinned: secondary `TrakkButton` (cancel) + accent `TrakkButton` (save), right-aligned. Errors under each field in mono 10.5px `danger`.
 - **Form controls:** text → `TextField`; textarea → same box, min 88px tall, sans 12.5px; select of few options → segmented row of `Chip`-like buttons (active: `selected` background, `line-strong` border, `fg` text); weekdays → seven 28px square toggles `M T W T F S S`; color → seven 22px swatches of the goal palette with a 1px `fg` ring on the selected one; date → native `<input type="date">` inside the `TextField` box with `color-scheme: dark`; points → segmented 1–5.
-- **Goal sheet:** title, type (habit | project, locked after creation if the goal has completions), color, priority, start, due, target per week (habit only), area, related goal (select), objective, done when, slug (edit mode). Edit mode adds a status row (`active · paused · done · abandoned`) and a `delete goal` danger text button with an inline confirm (`type the goal title to delete`).
+- **Goal sheet:** title, type (habit | project, locked once the goal has tasks), color, priority, start, due, target per week (habit only), area, related goal (select), objective, done when, slug (edit mode). Edit mode adds a status row (`active · paused · done · abandoned`) and a `delete goal` danger text button with an inline confirm (`type the goal title to delete`).
 - **Task sheet:** goal (select, preselected), title, points, then for projects due date + tag (`critical`, `milestone`, free text) + status; for habits weekdays + time. Notes. Checklist section (projects): rows with `TrakkCheckbox`, inline add field (`› add item` + Enter), delete on hover. Edit mode: `delete task` danger text button with inline confirm.
 - **Reminder sheet:** label, kind (segmented), goal (optional), time, recurring weekdays **or** once date, channels (telegram, email toggles), active toggle. Edit mode: delete.
 - **Replan sheet:** list of overdue tasks with checkboxes (all selected), target segmented `today · tomorrow · next monday · pick date`, save button `move N tasks`.

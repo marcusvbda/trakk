@@ -1,7 +1,11 @@
 import { Head } from '@inertiajs/react';
+import { EmptyState } from '@/components/trakk/empty-state';
 import { GoalFacts } from '@/components/trakk/goal-facts';
 import { GoalHeader } from '@/components/trakk/goal-header';
+import { GoalObjectivePanel } from '@/components/trakk/goal-objective-panel';
 import { GoalProgressPanel } from '@/components/trakk/goal-progress-panel';
+import { GoalRemindersPanel } from '@/components/trakk/goal-reminders-panel';
+import { HabitActionsPanel } from '@/components/trakk/habit-actions-panel';
 import { KanbanBoard } from '@/components/trakk/kanban-board';
 import { LiveDot } from '@/components/trakk/live-dot';
 import { LogFeed } from '@/components/trakk/log-feed';
@@ -10,7 +14,9 @@ import { PaceChart } from '@/components/trakk/pace-chart';
 import { Chip } from '@/components/ui/chip';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
+import { TrakkButton } from '@/components/ui/trakk-button';
 import { useGoalBoardState } from '@/hooks/use-goal-board-state';
+import { useSheets } from '@/hooks/use-sheets';
 import { goalColorClass } from '@/lib/goal-color';
 import { cn } from '@/lib/utils';
 import type { GoalDetailProps, Priority } from '@/types';
@@ -22,14 +28,24 @@ const priorityTone = {
 } as const satisfies Record<Priority, string>;
 
 export default function GoalShow(props: GoalDetailProps) {
-    const { goal, progress, paceChart, reminders } = props;
+    const {
+        goal,
+        form,
+        progress,
+        paceChart,
+        board,
+        actions,
+        reminders,
+        history,
+    } = props;
     const state = useGoalBoardState(props);
+    const sheets = useSheets();
 
     return (
         <>
             <Head title={goal.title} />
 
-            <GoalHeader slug={goal.slug} />
+            <GoalHeader form={form} />
 
             <section aria-labelledby="h-title" className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5">
@@ -53,107 +69,82 @@ export default function GoalShow(props: GoalDetailProps) {
                     </Chip>
                     <PaceBadge pace={goal.pace} className="text-sm" />
                 </div>
-                <GoalFacts goal={goal} overdueCount={state.overdueCount} />
+                <GoalFacts goal={goal} />
             </section>
 
             <div className="flex flex-wrap items-stretch gap-3.5">
-                <Panel
-                    aria-labelledby="h-objective"
-                    className="flex flex-[1_1_330px] flex-col gap-3"
-                >
-                    <PanelHeader
-                        id="h-objective"
-                        title="Objective"
-                        className="mb-0"
-                    />
-                    <p className="text-md leading-[1.6] text-body">
-                        {goal.objective.text}
-                    </p>
-                    <div className="flex flex-col gap-1.5 rounded-control border border-dashed border-line-strong p-2.5">
-                        <span className="font-mono text-2xs tracking-[0.12em] text-accent uppercase">
-                            done when
-                        </span>
-                        <span className="text-base leading-[1.5] text-body">
-                            {goal.objective.doneWhen}
-                        </span>
-                    </div>
-                    <div className="mt-auto font-mono text-sm leading-[1.6] text-muted">
-                        area · {goal.objective.area}
-                        <br />
-                        linked to · {goal.objective.linkedTo}
-                    </div>
-                </Panel>
-
+                <GoalObjectivePanel goal={goal} form={form} />
                 <PaceChart
                     chart={paceChart}
                     color={goal.color}
-                    percent={state.percent}
+                    percent={progress.percent}
                 />
-
                 <GoalProgressPanel
                     color={goal.color}
-                    percent={state.percent}
-                    expectedPercent={progress.expectedPercent}
-                    doneCount={state.doneCount}
-                    totalCount={progress.totalCount}
-                    counts={state.counts}
+                    goalSlug={goal.slug}
+                    progress={progress}
                 />
             </div>
 
-            <Panel aria-labelledby="h-board">
-                <PanelHeader
-                    id="h-board"
-                    title="Board"
-                    count={`${progress.totalCount} tasks`}
-                >
-                    <span className="font-mono text-xs text-muted">
-                        → advance · ↺ reopen
-                    </span>
-                </PanelHeader>
-                <KanbanBoard
-                    columns={state.columns}
-                    variant="full"
-                    onMove={state.moveTask}
-                />
-            </Panel>
-
-            <div className="flex flex-wrap items-stretch gap-3.5">
-                <Panel
-                    variant="list"
-                    aria-labelledby="h-reminders"
-                    className="flex-[1_1_342px] pb-2"
-                >
+            {board && (
+                <Panel aria-labelledby="h-board">
                     <PanelHeader
-                        inset
-                        id="h-reminders"
-                        title="Reminders for this goal"
+                        id="h-board"
+                        title="Board"
+                        count={`${progress.totalCount} tasks`}
                     >
                         <span className="font-mono text-xs text-muted">
-                            telegram
+                            → advance · ↺ reopen
                         </span>
                     </PanelHeader>
-                    {reminders.map((reminder) => (
-                        <div
-                            key={reminder.id}
-                            className="flex min-h-11 items-center gap-2.5 rounded-control px-1.5 transition-colors duration-150 hover:bg-hover"
+                    {progress.totalCount === 0 ? (
+                        <EmptyState
+                            hint="break the goal into steps"
+                            action={
+                                <TrakkButton
+                                    size="sm"
+                                    onClick={() =>
+                                        sheets.open({
+                                            kind: 'task',
+                                            goalSlug: goal.slug,
+                                        })
+                                    }
+                                >
+                                    + task
+                                </TrakkButton>
+                            }
                         >
-                            <span className="w-[78px] flex-none font-mono text-[11px] text-fg">
-                                {reminder.whenLabel}
-                            </span>
-                            <span className="min-w-0 flex-1 text-base text-body">
-                                {reminder.label}
-                            </span>
-                            <span className="flex-none font-mono text-xs text-muted">
-                                {reminder.detailLabel}
-                            </span>
-                        </div>
-                    ))}
+                            no tasks yet
+                        </EmptyState>
+                    ) : (
+                        <KanbanBoard
+                            columns={board.columns}
+                            goalSlug={goal.slug}
+                            variant="full"
+                            onMove={state.moveTask}
+                        />
+                    )}
                 </Panel>
+            )}
+
+            {actions && (
+                <HabitActionsPanel
+                    actions={actions}
+                    color={goal.color}
+                    goalSlug={goal.slug}
+                />
+            )}
+
+            <div className="flex flex-wrap items-stretch gap-3.5">
+                <GoalRemindersPanel
+                    reminders={reminders}
+                    goalSlug={goal.slug}
+                />
 
                 <Panel
                     variant="sunken"
                     aria-labelledby="h-history"
-                    className="flex-[1_1_390px]"
+                    className="flex flex-[1_1_390px] flex-col"
                 >
                     <PanelHeader
                         id="h-history"
@@ -165,10 +156,14 @@ export default function GoalShow(props: GoalDetailProps) {
                             live
                         </span>
                     </PanelHeader>
-                    <LogFeed
-                        entries={state.history}
-                        timeColumn="grid-cols-[64px_14px_minmax(0,1fr)]"
-                    />
+                    {history.length === 0 ? (
+                        <EmptyState>no history yet</EmptyState>
+                    ) : (
+                        <LogFeed
+                            entries={history}
+                            timeColumn="grid-cols-[64px_14px_minmax(0,1fr)]"
+                        />
+                    )}
                 </Panel>
             </div>
         </>

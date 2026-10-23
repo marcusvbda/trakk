@@ -2,10 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Data\CommandIndexData;
 use App\Data\Dashboard\TopBarData;
+use App\Data\SheetOptionsData;
+use App\Services\Dashboard\CommandIndexService;
 use App\Services\Dashboard\TopBarService;
+use App\Services\Goals\GoalOptionsService;
 use App\Support\Clock;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -46,8 +51,32 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'topBar' => fn () => $this->topBar($request),
+            'sheetOptions' => fn () => $this->sheetOptions($request),
+            'commandIndex' => Inertia::optional(fn () => $this->commandIndex($request)),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    private function commandIndex(Request $request): ?CommandIndexData
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        return app(CommandIndexService::class)->for($user, app(Clock::class)->today($user));
+    }
+
+    private function sheetOptions(Request $request): ?SheetOptionsData
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        return app(GoalOptionsService::class)->for($user, app(Clock::class)->today($user));
     }
 
     private function topBar(Request $request): ?TopBarData

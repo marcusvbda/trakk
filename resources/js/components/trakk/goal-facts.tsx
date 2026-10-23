@@ -3,11 +3,6 @@ import { goalColorClass } from '@/lib/goal-color';
 import { cn } from '@/lib/utils';
 import type { GoalDetail } from '@/types';
 
-type FactsProps = {
-    goal: GoalDetail;
-    overdueCount: number;
-};
-
 function Fact({ label, children }: { label: string; children: ReactNode }) {
     return (
         <div className="flex min-w-0 flex-col gap-1 bg-surface px-3 py-2.5">
@@ -21,7 +16,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-export function GoalFacts({ goal, overdueCount }: FactsProps) {
+export function GoalFacts({ goal }: { goal: GoalDetail }) {
     return (
         <dl className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-px overflow-hidden rounded-panel border border-divider bg-divider">
             <Fact label="start">{goal.facts.start}</Fact>
@@ -39,7 +34,7 @@ export function GoalFacts({ goal, overdueCount }: FactsProps) {
                 />
                 {goal.colorHex}
             </Fact>
-            <Fact label="overdue">{overdueCount}</Fact>
+            <Fact label="overdue">{goal.facts.overdueCount}</Fact>
         </dl>
     );
 }

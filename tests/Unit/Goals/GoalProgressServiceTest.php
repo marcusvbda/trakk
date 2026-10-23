@@ -143,3 +143,40 @@ describe('week dots', function () {
             ->and($week->days[1])->toBe(DayState::Missed);
     });
 });
+
+describe('progress on a past day', function () {
+    it('counts only the tasks done up to that day', function (string $day, int $percent) {
+        $goal = projectGoalDoneOn('2026-07-01', '2027-01-15', 4, ['2026-08-01', '2026-09-01', '2026-10-01']);
+
+        expect($this->service->progressOn($goal, day($day)))->toBe($percent);
+    })->with([
+        'before the first completion' => ['2026-07-31', 0],
+        'on the day of the first' => ['2026-08-01', 25],
+        'between two' => ['2026-09-15', 50],
+        'after all' => ['2026-12-01', 75],
+    ]);
+
+    it('counts only the hit days up to that day for a habit', function () {
+        $goal = habitGoal('2026-01-01', '2026-03-12', 5, ['2026-01-05', '2026-01-06', '2026-02-01']);
+
+        expect($this->service->progressOn($goal, day('2026-01-06')))->toBe(4)
+            ->and($this->service->progressOn($goal, day('2026-03-01')))->toBe(6);
+    });
+
+    it('matches the plain progress when no day is given', function () {
+        $goal = projectGoalDoneOn('2026-07-01', '2027-01-15', 4, ['2026-08-01']);
+
+        expect($this->service->progressOn($goal, null))->toBe($this->service->progress($goal));
+    });
+});
+
+describe('habit pace', function () {
+    it('gives hit days per week so far and still needed to reach the planned days', function () {
+        $goal = habitGoal('2026-01-01', '2026-03-12', 5, array_map(fn (int $offset): string => day('2026-01-01')->addDays($offset)->toDateString(), range(0, 19)));
+
+        expect($this->service->hitDayCount($goal))->toBe(20)
+            ->and($this->service->plannedDayCount($goal))->toBe(50)
+            ->and($this->service->currentPace($goal, day('2026-01-29')))->toBe(5.0)
+            ->and($this->service->requiredPace($goal, day('2026-01-29')))->toBe(5.0);
+    });
+});

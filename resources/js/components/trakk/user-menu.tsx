@@ -1,17 +1,12 @@
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { firstName, truncate } from '@/lib/format';
-import { logout } from '@/routes';
+import { signOut } from '@/lib/sign-out';
 
 const userNameLimit = 10;
 
 export function UserMenu() {
     const { auth } = usePage().props;
-
-    function signOut() {
-        router.flushAll();
-        router.post(logout.url());
-    }
 
     return (
         <DropdownMenu.Root>

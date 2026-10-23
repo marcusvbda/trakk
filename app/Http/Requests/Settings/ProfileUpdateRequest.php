@@ -17,6 +17,11 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->profileRules($this->user()->id);
+        return [
+            ...$this->profileRules($this->user()->id),
+            'timezone' => ['required', 'timezone:all'],
+            'daily_points_target' => ['required', 'integer', 'between:1,50'],
+            'telegram_chat_id' => ['nullable', 'string', 'max:32', 'regex:/^-?\d+$/'],
+        ];
     }
 }

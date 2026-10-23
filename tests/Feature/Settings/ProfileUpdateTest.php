@@ -30,6 +30,8 @@ class ProfileUpdateTest extends TestCase
             ->patch(route('profile.update'), [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                'timezone' => 'Europe/Dublin',
+                'daily_points_target' => 14,
             ]);
 
         $response

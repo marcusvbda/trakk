@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Support\Toast;
+use DateTimeZone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -19,7 +21,9 @@ final class ProfileController extends Controller
      */
     public function edit(): Response
     {
-        return Inertia::render('settings/profile');
+        return Inertia::render('settings/profile', [
+            'timezones' => DateTimeZone::listIdentifiers(),
+        ]);
     }
 
     /**
@@ -29,7 +33,7 @@ final class ProfileController extends Controller
     {
         $request->user()->update($request->validated());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+        Toast::success('profile saved');
 
         return to_route('profile.edit');
     }

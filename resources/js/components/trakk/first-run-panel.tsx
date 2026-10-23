@@ -1,11 +1,14 @@
 import { Link } from '@inertiajs/react';
-import { UnavailableButton } from '@/components/trakk/unavailable-button';
+import { useSheets } from '@/hooks/use-sheets';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
+import { TrakkButton } from '@/components/ui/trakk-button';
 import { edit } from '@/routes/profile';
 import type { FirstRun } from '@/types';
 
 export function FirstRunPanel({ firstRun }: { firstRun: FirstRun }) {
+    const sheets = useSheets();
+
     return (
         <Panel aria-labelledby="h-first-run">
             <PanelHeader id="h-first-run" title="› trakk init">
@@ -15,10 +18,14 @@ export function FirstRunPanel({ firstRun }: { firstRun: FirstRun }) {
             </PanelHeader>
             <ol className="flex flex-col gap-1">
                 <Step number={1} isDone={false} label="create your first goal">
-                    <UnavailableButton>+ goal</UnavailableButton>
+                    <TrakkButton onClick={() => sheets.open({ kind: 'goal' })}>
+                        + goal
+                    </TrakkButton>
                 </Step>
                 <Step number={2} isDone={false} label="add tasks to it">
-                    <UnavailableButton>+ task</UnavailableButton>
+                    <TrakkButton onClick={() => sheets.open({ kind: 'task' })}>
+                        + task
+                    </TrakkButton>
                 </Step>
                 <Step
                     number={3}

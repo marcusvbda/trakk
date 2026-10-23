@@ -17,13 +17,19 @@ paths:
 
 ## Structure
 
-- Every authenticated Trakk page gets the top bar (logo, `~/trakk`, version, date, live clock, year progress) from `TrakkLayout`; pages never render their own copy. Page controls go into it with `<TopBarSlot>`. The account dropdown with log out (`UserMenu`) is part of it; never add another logout control. The data is the shared Inertia prop `topBar`, not a per-page prop.
+- Every authenticated Trakk page gets the top bar (logo, `~/trakk`, version, date, live clock, year progress) from `TrakkLayout`; pages never render their own copy. The logo and `~/trakk` are always one link to the dashboard (owner decision). Page controls go into it with `<TopBarSlot>`. The account dropdown with log out (`UserMenu`) is part of it; never add another logout control. The data is the shared Inertia prop `topBar`, not a per-page prop.
 - App name and version are never hard-coded in components or copy. They come from `config('app.name')` (`APP_NAME`, default `Trakk`) and `config('trakk.version')` (`APP_VERSION`), shared as the Inertia props `name` and `version`; read them with `usePage().props`. The brand mark is the `LogoMark` diamond in the accent green, and `public/favicon.svg`, `favicon.ico` and `apple-touch-icon.png` reproduce it. Owner decision.
 - No blinking cursor, caret or underscore anywhere (no `animate-blink`, no `_` after logs or loading text). A blink only exists in a real, typeable input, drawn by the browser. Owner decision.
 - Everything clickable has `cursor: pointer`. The base layer in `app.css` covers `button`, `a[href]`, `[role=button]`, `[role=menuitem]`, `summary` and `select`; a clickable element outside those needs `role="button"` or `cursor-pointer`. Never remove that base rule. Owner decision.
+- Create and edit sheets (goal, task, reminder) are owned by `SheetHost` in `TrakkLayout`. A page opens one with `useSheets().open(...)` and never mounts its own copy. Never ship a button that does nothing: build its sheet or leave the button out.
 - Pages in `resources/js/pages/` (lowercase, kebab-case files, matching `Inertia::render` names).
 - Domain components in `resources/js/components/trakk/`, primitives in `resources/js/components/ui/`, one component per file, kebab-case file names, PascalCase exports.
 - Types for every page prop in `resources/js/types/`, mirroring the Laravel Resources.
+
+## Toasts
+
+- Operation feedback is a toast: the server flashes it (`Toast::success`) and `use-flash-toast.ts` shows it through the one `Toaster` in `components/ui/sonner.tsx`. Pages never call `toast()` for a server operation. A failed request (`httpException`, `networkError`) toasts an error by itself. Owner decision.
+- Toasts use the Trakk tokens: `surface` background, `line` border, 6px radius, no shadow, mono 11px, a glyph in mono (`✓` accent, `×` danger, `!` warning, `›` info).
 
 ## Components
 

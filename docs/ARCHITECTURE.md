@@ -53,12 +53,12 @@ app/
 ├── Policies/                 # GoalPolicy, TaskPolicy, ChecklistItemPolicy, ReminderPolicy (ownership)
 ├── Support/                  # Clock (today in the user's timezone), Labels (server-side formatting)
 └── Services/
-    ├── Goals/                # GoalService (create with unique slug, update, status, delete), GoalProgressService (progress, expected, pace, projection)
-    ├── Tasks/                # TaskService (create, update, move, replan, checklist), CompletionService (complete, undo), OnTimeService (on time rate)
+    ├── Goals/                # GoalService (create with unique slug, update, status, delete), GoalProgressService (progress, progress on a past day, expected, pace, projection), GoalDetailService + PaceChartBuilder (the goal page), GoalsListService (`/goals`), GoalOptionsService (goals for the selects)
+    ├── Tasks/                # TaskService (create, update, move, replan, checklist), CompletionService (complete, undo), OnTimeService (on time rate), KanbanBuilder (board columns), TaskSheetBuilder (the task sheet's data)
     ├── Scoring/              # ScoreService (day score, week score), StreakService, ConsistencyService (heatmap levels)
-    ├── Dashboard/            # DashboardService (assembles the dashboard read model from KpiService, TodayListBuilder, AgendaBuilder, SuggestionService, FocusProjectService, StatusLineService), TopBarService + McpStatusService (shared top bar), GoalDetailService (S3)
-    ├── Activity/             # ActivityLogger (log entries, `· claude` suffix for MCP), CheckInService (close the day)
-    ├── Reminders/            # ReminderService (create, update, delete, toggle, defaults; later due reminders and message building)
+    ├── Dashboard/            # DashboardService (assembles the dashboard read model from KpiService, TodayListBuilder, AgendaBuilder, SuggestionService, FocusProjectService, StatusLineService), TopBarService + McpStatusService (shared top bar), CommandIndexService (the palette's goals and today's tasks)
+    ├── Activity/             # ActivityLogger (log entries, `· claude` suffix for MCP), CheckInService (close the day), LogEntryBuilder (activities to log lines)
+    ├── Reminders/            # ReminderService (create, update, delete, toggle, defaults; later due reminders and message building), ReminderFormBuilder (the reminder sheet's data)
     └── Telegram/             # TelegramClient (send message)
 ```
 
@@ -70,13 +70,13 @@ Rules for each layer are in `.ai/rules/` (index: `.ai/rules/index.md`).
 resources/js/
 ├── pages/
 │   ├── dashboard.tsx
-│   ├── goals/{index,show,create,edit}.tsx
-│   └── reminders/index.tsx
+│   ├── goals/{index,show}.tsx
+│   └── settings/{profile,security}.tsx
 ├── components/
 │   ├── ui/                   # primitives: panel, chip, button, toggle, checkbox, progress-bar
 │   └── trakk/                # domain components from docs/DESIGN.md (kpi-card, action-row, goal-card, kanban-board, ...)
-├── layouts/trakk-layout.tsx  # top bar + page container
-├── hooks/                    # use-clock, use-command-bar
+├── layouts/trakk-layout.tsx  # top bar + page container, hosts the sheets and the command palette
+├── hooks/                    # use-clock, use-sheets (open the goal, task and reminder sheets from anywhere), use-command-palette
 ├── lib/                      # format (dates, points, percent), pace colors
 └── types/                    # TS types mirroring API Resources
 ```
@@ -110,6 +110,16 @@ activities      id, user_id→users, goal_id?→goals, task_id?→tasks, type, m
 The dashboard is one Inertia page fed by `DashboardService::for(User $user, CarbonImmutable $today): DashboardData`. It runs a fixed number of queries (no N+1; a test asserts at most 20 with the demo seed), computes pace with `GoalProgressService`, and returns `App\Data\Dashboard\DashboardData`, whose camelCase public properties are the Inertia props (`toProps()`). The shared `topBar` prop comes from `TopBarService` (date, year progress, MCP tool count and whether Claude logged anything in the last 24h). Pages never compute business numbers; they only format them.
 
 Mutations (check action, move card, toggle reminder) use Inertia `router` / `<Form>` with optimistic UI and `preserveScroll`. Props are reloaded partially (`only: [...]`) after each mutation. Optimistic updates use Inertia 3's `router.optimistic()` in `use-dashboard-state.ts`; they patch only what is cheap to show at once (the row, today's points, one log line) and the server's props replace them when the reload lands.
+
+### Goal page, sheets and palette
+
+`GoalDetailService::for(Goal, CarbonImmutable $today): GoalDetailData` builds the goal page from a fixed set of queries (a test caps them); `GoalDetailData::toProps()` gives the Inertia props. `KanbanBuilder`, `TaskSheetBuilder`, `LogEntryBuilder` and `ReminderFormBuilder` are shared with the dashboard, so a board card, a log line or a reminder has one shape on both pages. Every card, habit action and reminder carries the raw values its edit sheet needs (`task`, `form`), so opening a sheet costs no request.
+
+The create and edit sheets (goal, task, reminder) are owned by `SheetHost` in `TrakkLayout`; any page opens one with `useSheets().open(...)`. Their selects use the shared lazy prop `sheetOptions` (the owner's goals, today and a default due date). The command palette (`CommandPaletteHost`, ⌘K) loads the optional prop `commandIndex` (goals and today's tasks) with `router.reload({ only: ['commandIndex'] })` each time it opens. The dashboard's check-in and replan sheets stay page-local; the palette reaches them with `/?sheet=check-in` from another page, or a window event when already there.
+
+Goal URLs use the slug, which is unique per user only: `AppServiceProvider` binds `{goal}` among the signed-in user's goals, so another user's slug is a 404. Routes still declare `{goal:slug}` so Wayfinder types the parameter as a slug.
+
+Write routes of S3 (all behind `auth`; models by policy, goals by the scoped binding): `POST /goals`, `PATCH|DELETE /goals/{goal}`, `PATCH /goals/{goal}/status`, `POST /goals/{goal}/tasks`, `PATCH|DELETE /tasks/{task}`, `POST /tasks/{task}/checklist`, `PATCH|DELETE /checklist/{item}`, `POST /reminders`, `PATCH|DELETE /reminders/{reminder}`; settings fields go through `PATCH /settings/profile`.
 
 Dashboard write routes (`routes/web.php`, all behind `auth` and the model policies): `POST /tasks/{task}/completions`, `DELETE /tasks/{task}/completions/today`, `PATCH /tasks/{task}/status`, `PATCH /reminders/{reminder}/active`, `POST /replan`, `POST /check-in`.
 

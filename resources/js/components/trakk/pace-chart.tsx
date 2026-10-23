@@ -92,133 +92,146 @@ export function PaceChart({
                     ))}
                 </div>
             </PanelHeader>
-            <svg
-                className="inline align-baseline"
-                role="img"
-                aria-label={ariaLabel}
-                width="100%"
-                height="170"
-                viewBox="0 0 560 160"
-                preserveAspectRatio="xMidYMid meet"
-            >
-                {[12, 41.5, 71, 100.5].map((line) => (
+            <div className="relative">
+                <svg
+                    className="inline align-baseline"
+                    role="img"
+                    aria-label={ariaLabel}
+                    width="100%"
+                    height="170"
+                    viewBox="0 0 560 160"
+                    preserveAspectRatio="xMidYMid meet"
+                >
+                    {[12, 41.5, 71, 100.5].map((line) => (
+                        <line
+                            key={line}
+                            x1={plot.left}
+                            x2={plot.right}
+                            y1={line}
+                            y2={line}
+                            className="stroke-divider"
+                        />
+                    ))}
                     <line
-                        key={line}
                         x1={plot.left}
                         x2={plot.right}
-                        y1={line}
-                        y2={line}
-                        className="stroke-divider"
+                        y1={plot.bottom}
+                        y2={plot.bottom}
+                        className="stroke-line-strong"
                     />
-                ))}
-                <line
-                    x1={plot.left}
-                    x2={plot.right}
-                    y1={plot.bottom}
-                    y2={plot.bottom}
-                    className="stroke-line-strong"
-                />
-                {[
-                    { value: '100', at: 15 },
-                    { value: '50', at: 74 },
-                    { value: '0', at: 133 },
-                ].map((label) => (
+                    {[
+                        { value: '100', at: 15 },
+                        { value: '50', at: 74 },
+                        { value: '0', at: 133 },
+                    ].map((label) => (
+                        <text
+                            key={label.value}
+                            x="32"
+                            y={label.at}
+                            textAnchor="end"
+                            className={cn(monoText, 'fill-faint')}
+                        >
+                            {label.value}
+                        </text>
+                    ))}
                     <text
-                        key={label.value}
-                        x="32"
-                        y={label.at}
+                        x={plot.left}
+                        y="148"
+                        className={cn(monoText, 'fill-faint')}
+                    >
+                        {chart.startLabel}
+                    </text>
+                    {chart.ticks.map((tick) => (
+                        <text
+                            key={tick.label}
+                            x={x(tick.day)}
+                            y="148"
+                            textAnchor="middle"
+                            className={cn(monoText, 'fill-faint')}
+                        >
+                            {tick.label}
+                        </text>
+                    ))}
+                    <text
+                        x={plot.right}
+                        y="148"
                         textAnchor="end"
                         className={cn(monoText, 'fill-faint')}
                     >
-                        {label.value}
+                        {chart.dueLabel}
                     </text>
-                ))}
-                <text
-                    x={plot.left}
-                    y="148"
-                    className={cn(monoText, 'fill-faint')}
-                >
-                    {chart.startLabel}
-                </text>
-                {chart.ticks.map((tick) => (
+                    <line
+                        x1={plot.left}
+                        y1={plot.bottom}
+                        x2={plot.right}
+                        y2={plot.top}
+                        strokeDasharray="3 3"
+                        className="stroke-muted"
+                    />
+                    <line
+                        x1={todayX}
+                        x2={todayX}
+                        y1="8"
+                        y2="134"
+                        opacity="0.6"
+                        className="stroke-accent"
+                    />
                     <text
-                        key={tick.label}
-                        x={x(tick.day)}
-                        y="148"
+                        x={todayX}
+                        y="158"
                         textAnchor="middle"
-                        className={cn(monoText, 'fill-faint')}
+                        className={cn(monoText, 'fill-accent')}
                     >
-                        {tick.label}
+                        today
                     </text>
-                ))}
-                <text
-                    x={plot.right}
-                    y="148"
-                    textAnchor="end"
-                    className={cn(monoText, 'fill-faint')}
-                >
-                    {chart.dueLabel}
-                </text>
-                <line
-                    x1={plot.left}
-                    y1={plot.bottom}
-                    x2={plot.right}
-                    y2={plot.top}
-                    strokeDasharray="3 3"
-                    className="stroke-muted"
-                />
-                <line
-                    x1={todayX}
-                    x2={todayX}
-                    y1="8"
-                    y2="134"
-                    opacity="0.6"
-                    className="stroke-accent"
-                />
-                <text
-                    x={todayX}
-                    y="158"
-                    textAnchor="middle"
-                    className={cn(monoText, 'fill-accent')}
-                >
-                    today
-                </text>
-                <line
-                    x1={todayX}
-                    y1={y(percent)}
-                    x2={plot.right}
-                    y2={projectedY}
-                    strokeDasharray="1 3"
-                    className="stroke-danger"
-                />
-                <polyline
-                    points={points}
-                    fill="none"
-                    strokeWidth="1.5"
-                    className={goalColor.stroke}
-                />
-                <circle
-                    cx={todayX}
-                    cy={y(percent)}
-                    r="3"
-                    strokeWidth="1.5"
-                    className={cn('fill-surface', goalColor.stroke)}
-                />
-                <circle
-                    cx={todayX}
-                    cy={y(chart.expectedPercent)}
-                    r="2.5"
-                    className="fill-muted"
-                />
-                <text
-                    x="556"
-                    y={projectedY - 5}
-                    textAnchor="end"
-                    className={cn(monoText, 'fill-danger')}
-                >
-                    {chart.projectedPercent}%
-                </text>
-            </svg>
+                    <line
+                        x1={todayX}
+                        y1={y(percent)}
+                        x2={plot.right}
+                        y2={projectedY}
+                        strokeDasharray="1 3"
+                        className="stroke-danger"
+                    />
+                    <polyline
+                        points={points}
+                        fill="none"
+                        strokeWidth="1.5"
+                        className={goalColor.stroke}
+                    />
+                    <circle
+                        cx={todayX}
+                        cy={y(percent)}
+                        r="3"
+                        strokeWidth="1.5"
+                        className={cn('fill-surface', goalColor.stroke)}
+                    />
+                    <circle
+                        cx={todayX}
+                        cy={y(chart.expectedPercent)}
+                        r="2.5"
+                        className="fill-muted"
+                    />
+                    <text
+                        x="556"
+                        y={projectedY - 5}
+                        textAnchor="end"
+                        className={cn(monoText, 'fill-danger')}
+                    >
+                        {chart.projectedPercent}%
+                    </text>
+                </svg>
+                {chart.caption && (
+                    <div
+                        role="status"
+                        className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                    >
+                        <span className="rounded-control border border-dashed border-line-strong bg-surface px-2.5 py-1.5 font-mono text-[11px] text-body">
+                            <span className="text-accent">›</span>{' '}
+                            {chart.caption}
+                        </span>
+                    </div>
+                )}
+            </div>
             <div className="mt-1.5 grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2.5 border-t border-divider pt-2.5">
                 <Stat
                     label="expected today"
@@ -238,12 +251,12 @@ export function PaceChart({
                 <Stat
                     label="current pace"
                     value={String(chart.currentPace)}
-                    unit=" tasks/wk"
+                    unit={` ${chart.paceUnit}`}
                 />
                 <Stat
                     label="required pace"
                     value={String(chart.requiredPace)}
-                    unit=" tasks/wk"
+                    unit={` ${chart.paceUnit}`}
                     className="text-warning"
                 />
             </div>

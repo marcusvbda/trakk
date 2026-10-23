@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/trakk/empty-state';
 import { KanbanCard } from '@/components/trakk/kanban-card';
-import { UnavailableButton } from '@/components/trakk/unavailable-button';
+import { TrakkButton } from '@/components/ui/trakk-button';
+import { useSheets } from '@/hooks/use-sheets';
 import { cn } from '@/lib/utils';
 import type { KanbanColumnData, TaskStatus } from '@/types';
 
@@ -38,11 +39,18 @@ const columnMeta: Record<TaskStatus, ColumnMeta> = {
 
 type KanbanBoardProps = {
     columns: KanbanColumnData[];
+    goalSlug: string;
     variant: 'compact' | 'full';
     onMove: (cardId: number, from: TaskStatus, to: TaskStatus) => void;
 };
 
-export function KanbanBoard({ columns, variant, onMove }: KanbanBoardProps) {
+export function KanbanBoard({
+    columns,
+    goalSlug,
+    variant,
+    onMove,
+}: KanbanBoardProps) {
+    const sheets = useSheets();
     const isFull = variant === 'full';
 
     return (
@@ -82,9 +90,17 @@ export function KanbanBoard({ columns, variant, onMove }: KanbanBoardProps) {
                                     size="compact"
                                     action={
                                         column.status === 'todo' ? (
-                                            <UnavailableButton size="sm">
+                                            <TrakkButton
+                                                size="sm"
+                                                onClick={() =>
+                                                    sheets.open({
+                                                        kind: 'task',
+                                                        goalSlug,
+                                                    })
+                                                }
+                                            >
                                                 + task
-                                            </UnavailableButton>
+                                            </TrakkButton>
                                         ) : undefined
                                     }
                                 >
@@ -110,6 +126,12 @@ export function KanbanBoard({ columns, variant, onMove }: KanbanBoardProps) {
                                     onMove={() =>
                                         next &&
                                         onMove(card.id, column.status, next)
+                                    }
+                                    onOpen={() =>
+                                        sheets.open({
+                                            kind: 'task',
+                                            task: card.task,
+                                        })
                                     }
                                 />
                             ))}

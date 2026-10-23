@@ -20,15 +20,16 @@ import { ReplanSheet } from '@/components/trakk/replan-sheet';
 import { StatusFooter } from '@/components/trakk/status-footer';
 import { TimelineItem } from '@/components/trakk/timeline-item';
 import { TopBarSlot } from '@/components/trakk/top-bar-slot';
-import { UnavailableButton } from '@/components/trakk/unavailable-button';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { TrakkButton } from '@/components/ui/trakk-button';
 import { useDashboardState } from '@/hooks/use-dashboard-state';
+import { useSheets } from '@/hooks/use-sheets';
 import { percentOf } from '@/lib/format';
 import { goalColorClass } from '@/lib/goal-color';
-import { show } from '@/routes/goals';
+import { index as goalsIndex, show } from '@/routes/goals';
+import { edit } from '@/routes/profile';
 import type { DashboardProps } from '@/types';
 
 const emptyGoalsCopy: Record<
@@ -43,6 +44,7 @@ const emptyGoalsCopy: Record<
 
 export default function Dashboard(props: DashboardProps) {
     const state = useDashboardState(props);
+    const sheets = useSheets();
     const { focusProject, hints } = props;
     const todayPercent = Math.min(
         100,
@@ -61,7 +63,9 @@ export default function Dashboard(props: DashboardProps) {
                 <CommandBar />
                 <div className="ml-auto flex items-center gap-2">
                     <McpStatus />
-                    <UnavailableButton>+ goal</UnavailableButton>
+                    <TrakkButton onClick={() => sheets.open({ kind: 'goal' })}>
+                        + goal
+                    </TrakkButton>
                     <TrakkButton
                         variant="accent"
                         onClick={() => state.setSheet('check-in')}
@@ -116,9 +120,14 @@ export default function Dashboard(props: DashboardProps) {
                                 'add a task with weekdays or a due date'
                             }
                             action={
-                                <UnavailableButton size="sm">
+                                <TrakkButton
+                                    size="sm"
+                                    onClick={() =>
+                                        sheets.open({ kind: 'task' })
+                                    }
+                                >
                                     + task
-                                </UnavailableButton>
+                                </TrakkButton>
                             }
                         >
                             no actions scheduled today
@@ -203,9 +212,14 @@ export default function Dashboard(props: DashboardProps) {
                             }
                             action={
                                 hints.nextDeadline ? undefined : (
-                                    <UnavailableButton size="sm">
+                                    <TrakkButton
+                                        size="sm"
+                                        onClick={() =>
+                                            sheets.open({ kind: 'task' })
+                                        }
+                                    >
                                         + task
-                                    </UnavailableButton>
+                                    </TrakkButton>
                                 )
                             }
                         >
@@ -224,16 +238,24 @@ export default function Dashboard(props: DashboardProps) {
                 className="flex flex-col gap-2.5"
             >
                 <div className="flex flex-wrap items-center justify-between gap-2.5">
-                    <h2
-                        id="h-goals"
-                        className="font-mono text-sm font-medium tracking-widest text-fg-2 uppercase"
-                    >
-                        Goals{' '}
-                        <span className="font-normal text-faint">
-                            · {props.goalsSummary.active} active ·{' '}
-                            {props.goalsSummary.onPace} on pace
-                        </span>
-                    </h2>
+                    <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                        <h2
+                            id="h-goals"
+                            className="font-mono text-sm font-medium tracking-widest text-fg-2 uppercase"
+                        >
+                            Goals{' '}
+                            <span className="font-normal text-faint">
+                                · {props.goalsSummary.active} active ·{' '}
+                                {props.goalsSummary.onPace} on pace
+                            </span>
+                        </h2>
+                        <Link
+                            href={goalsIndex()}
+                            className="font-mono text-xs text-accent-soft hover:text-accent-hover"
+                        >
+                            goals →
+                        </Link>
+                    </div>
                     <GoalFilterTabs
                         active={state.filter}
                         counts={state.goalFilterCounts}
@@ -250,9 +272,14 @@ export default function Dashboard(props: DashboardProps) {
                         }
                         action={
                             props.goals.length === 0 ? (
-                                <UnavailableButton size="sm">
+                                <TrakkButton
+                                    size="sm"
+                                    onClick={() =>
+                                        sheets.open({ kind: 'goal' })
+                                    }
+                                >
                                     + goal
-                                </UnavailableButton>
+                                </TrakkButton>
                             ) : undefined
                         }
                     >
@@ -281,12 +308,13 @@ export default function Dashboard(props: DashboardProps) {
                         title="Reminders"
                         count={`${state.activeReminders} active`}
                     >
-                        <UnavailableButton
+                        <TrakkButton
                             size="icon"
                             aria-label="Add reminder"
+                            onClick={() => sheets.open({ kind: 'reminder' })}
                         >
                             +
-                        </UnavailableButton>
+                        </TrakkButton>
                     </PanelHeader>
                     {props.reminders.length === 0 ? (
                         <EmptyState
@@ -295,7 +323,7 @@ export default function Dashboard(props: DashboardProps) {
                                     <>
                                         telegram not linked ·{' '}
                                         <Link
-                                            href="/settings/profile"
+                                            href={edit()}
                                             className="text-accent-soft hover:text-accent-hover"
                                         >
                                             settings
@@ -304,9 +332,14 @@ export default function Dashboard(props: DashboardProps) {
                                 )
                             }
                             action={
-                                <UnavailableButton size="sm">
+                                <TrakkButton
+                                    size="sm"
+                                    onClick={() =>
+                                        sheets.open({ kind: 'reminder' })
+                                    }
+                                >
                                     + reminder
-                                </UnavailableButton>
+                                </TrakkButton>
                             }
                         >
                             no reminders
@@ -317,6 +350,12 @@ export default function Dashboard(props: DashboardProps) {
                                 key={reminder.id}
                                 reminder={reminder}
                                 onToggle={() => state.toggleReminder(reminder)}
+                                onOpen={() =>
+                                    sheets.open({
+                                        kind: 'reminder',
+                                        reminder: reminder.form,
+                                    })
+                                }
                             />
                         ))
                     )}
@@ -369,6 +408,7 @@ export default function Dashboard(props: DashboardProps) {
                     {focusProject ? (
                         <KanbanBoard
                             columns={focusProject.columns}
+                            goalSlug={focusProject.goalSlug}
                             variant="compact"
                             onMove={state.moveCard}
                         />
@@ -376,9 +416,14 @@ export default function Dashboard(props: DashboardProps) {
                         <EmptyState
                             hint="the most behind project shows its board here"
                             action={
-                                <UnavailableButton size="sm">
+                                <TrakkButton
+                                    size="sm"
+                                    onClick={() =>
+                                        sheets.open({ kind: 'goal' })
+                                    }
+                                >
                                     + goal
-                                </UnavailableButton>
+                                </TrakkButton>
                             }
                         >
                             no active project
