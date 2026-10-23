@@ -29,7 +29,7 @@ Paste into `resources/css/app.css` (Tailwind v4, CSS-first config). Use the gene
 
 ```css
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif; /* fontsource registers the variable font as "Inter Variable" */
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* surfaces */
@@ -94,6 +94,14 @@ Paste into `resources/css/app.css` (Tailwind v4, CSS-first config). Use the gene
   --text-base: 12.5px;   /* app default body size */
   --text-md: 13px;
   --text-lg: 14px;
+  /* the prototypes use the font's own line height, not Tailwind's per-size default */
+  --text-3xs--line-height: normal;
+  --text-2xs--line-height: normal;
+  --text-xs--line-height: normal;
+  --text-sm--line-height: normal;
+  --text-base--line-height: normal;
+  --text-md--line-height: normal;
+  --text-lg--line-height: normal;
 
   /* radius */
   --radius-chip: 3px;
@@ -114,7 +122,8 @@ Paste into `resources/css/app.css` (Tailwind v4, CSS-first config). Use the gene
 @layer base {
   html { color-scheme: dark; }
   body {
-    @apply bg-canvas text-body font-sans font-light text-base antialiased;
+    @apply bg-canvas text-body font-sans font-light text-base;
+    line-height: normal; /* the prototypes render without antialiased smoothing */
   }
   ::placeholder { color: var(--color-faint); }
   :focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }

@@ -17,6 +17,10 @@ export function formatPace({ status, delta }: Pace): string {
     return `${paceLabel[status]} ${signed}%`;
 }
 
+export function percentOf(part: number, total: number): number {
+    return total === 0 ? 0 : (part / total) * 100;
+}
+
 export function formatLate(days: number): string {
     return `−${days}d`;
 }

@@ -5,11 +5,6 @@ declare(strict_types=1);
 use App\Models\User;
 use Pest\Browser\Api\AwaitableWebpage;
 
-const VIEWPORTS = [
-    'desktop' => [1440, 900],
-    'mobile' => [390, 844],
-];
-
 function signIn(int $width, int $height): AwaitableWebpage
 {
     $user = User::factory()->create();
@@ -22,33 +17,41 @@ function signIn(int $width, int $height): AwaitableWebpage
         ->wait(1.5);
 }
 
-foreach (VIEWPORTS as $name => [$width, $height]) {
-    it("captures the sign in screen on {$name}", function () use ($name, $width, $height) {
-        visit('/login')
-            ->resize($width, $height)
-            ->wait(1)
-            ->screenshot(filename: "login-{$name}");
-    });
+dataset('viewports', [
+    'desktop' => ['desktop', 1440, 900],
+    'mobile' => ['mobile', 390, 844],
+]);
 
-    it("captures the sign in error state on {$name}", function () use ($name, $width, $height) {
-        visit('/login')
-            ->resize($width, $height)
-            ->press('sign in')
-            ->wait(0.8)
-            ->assertSee('email and password are required')
-            ->screenshot(filename: "login-error-{$name}");
-    });
+it('shows the sign in screen on {name}', function (string $name, int $width, int $height) {
+    visit('/login')
+        ->resize($width, $height)
+        ->wait(1)
+        ->assertSee('goals · pace · focus')
+        ->screenshot(filename: "login-{$name}");
+})->with('viewports');
 
-    it("captures the dashboard on {$name}", function () use ($name, $width, $height) {
-        signIn($width, $height)
-            ->assertPathIs('/')
-            ->screenshot(filename: "dashboard-{$name}");
-    });
+it('shows the sign in error state on {name}', function (string $name, int $width, int $height) {
+    visit('/login')
+        ->resize($width, $height)
+        ->press('sign in')
+        ->wait(0.8)
+        ->assertSee('email and password are required')
+        ->screenshot(filename: "login-error-{$name}");
+})->with('viewports');
 
-    it("captures the goal detail on {$name}", function () use ($name, $width, $height) {
-        signIn($width, $height)
-            ->navigate('/goals/nomad-visa')
-            ->wait(1)
-            ->screenshot(filename: "goal-{$name}");
-    });
-}
+it('shows the dashboard after signing in on {name}', function (string $name, int $width, int $height) {
+    signIn($width, $height)
+        ->assertPathIs('/')
+        ->assertSee('Focus project')
+        ->assertSee('4/8 actions')
+        ->screenshot(filename: "dashboard-{$name}");
+})->with('viewports');
+
+it('shows the goal detail on {name}', function (string $name, int $width, int $height) {
+    signIn($width, $height)
+        ->navigate('/goals/nomad-visa')
+        ->wait(1)
+        ->assertSee('Digital nomad visa · Spain')
+        ->assertSee('9/20')
+        ->screenshot(filename: "goal-{$name}");
+})->with('viewports');

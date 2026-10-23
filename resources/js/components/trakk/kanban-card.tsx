@@ -1,6 +1,6 @@
 import { TrakkButton } from '@/components/ui/trakk-button';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { formatChecklist } from '@/lib/format';
+import { formatChecklist, percentOf } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { KanbanCardData, TaskStatus } from '@/types';
 
@@ -72,7 +72,7 @@ export function KanbanCard({
                     <ProgressBar
                         size="xs"
                         className="mt-1.5"
-                        percent={(checklistDone / card.checklistTotal) * 100}
+                        percent={percentOf(checklistDone, card.checklistTotal)}
                         fillClassName={
                             isDone
                                 ? 'bg-dim'

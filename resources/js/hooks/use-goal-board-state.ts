@@ -1,14 +1,9 @@
 import { useState } from 'react';
-import { formatMinutes } from '@/lib/format';
+import { formatMinutes, percentOf } from '@/lib/format';
+import { moveCardBetweenColumns, taskStatusLabel } from '@/lib/kanban';
 import type { GoalDetailProps, LogEntry, TaskStatus } from '@/types';
 
 const maxHistoryEntries = 8;
-
-const taskStatusLabel: Record<TaskStatus, string> = {
-    todo: 'to do',
-    doing: 'doing',
-    done: 'done',
-};
 
 function historyKind(to: TaskStatus): LogEntry['kind'] {
     if (to === 'done') {
@@ -33,25 +28,12 @@ export function useGoalBoardState(props: GoalDetailProps) {
         }
 
         setColumns((current) =>
-            current.map((column) => {
-                if (column.status === from) {
-                    return {
-                        ...column,
-                        cards: column.cards.filter(
-                            (candidate) => candidate.id !== cardId,
-                        ),
-                    };
-                }
-
-                return column.status === to
-                    ? { ...column, cards: [...column.cards, card] }
-                    : column;
-            }),
+            moveCardBetweenColumns(current, cardId, from, to),
         );
         setHistory((entries) =>
             [
                 {
-                    id: `local-${Date.now()}`,
+                    id: `local-${crypto.randomUUID()}`,
                     timeLabel: `today ${formatMinutes(new Date())}`,
                     kind: historyKind(to),
                     text: `${card.title.toLowerCase()} → ${taskStatusLabel[to]}`,
@@ -80,7 +62,7 @@ export function useGoalBoardState(props: GoalDetailProps) {
             done: doneCount,
         },
         doneCount,
-        percent: Math.round((doneCount / props.progress.totalCount) * 100),
+        percent: Math.round(percentOf(doneCount, props.progress.totalCount)),
         overdueCount,
     };
 }

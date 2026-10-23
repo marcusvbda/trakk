@@ -12,6 +12,8 @@ final class GoalController extends Controller
 {
     public function show(string $goal): Response
     {
+        abort_unless($goal === 'nomad-visa', 404);
+
         return Inertia::render('goals/show', GoalDetailMock::props());
     }
 }

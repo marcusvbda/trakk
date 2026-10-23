@@ -18,6 +18,7 @@ import { PanelHeader } from '@/components/ui/panel-header';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { TrakkButton } from '@/components/ui/trakk-button';
 import { useDashboardState } from '@/hooks/use-dashboard-state';
+import { percentOf } from '@/lib/format';
 import { goalColorClass } from '@/lib/goal-color';
 import { show } from '@/routes/goals';
 import type { DashboardProps } from '@/types';
@@ -27,12 +28,14 @@ export default function Dashboard(props: DashboardProps) {
     const { focusProject } = props;
     const todayPercent = Math.min(
         100,
-        Math.round((state.pointsToday / props.dailyTarget) * 100),
+        Math.round(percentOf(state.pointsToday, props.dailyTarget)),
     );
 
     return (
         <>
             <Head title="Dashboard" />
+
+            <h1 className="sr-only">Dashboard</h1>
 
             <TopBar data={props.topBar} />
 

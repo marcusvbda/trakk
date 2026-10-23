@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GoalFilter } from '@/components/trakk/goal-filter-tabs';
-import { formatMinutes } from '@/lib/format';
+import { formatMinutes, percentOf } from '@/lib/format';
+import { moveCardBetweenColumns, taskStatusLabel } from '@/lib/kanban';
 import type {
     DashboardProps,
     GoalSummary,
@@ -10,12 +11,6 @@ import type {
 } from '@/types';
 
 const maxLogEntries = 8;
-
-const taskStatusLabel: Record<TaskStatus, string> = {
-    todo: 'to do',
-    doing: 'doing',
-    done: 'done',
-};
 
 function matchesFilter(goal: GoalSummary, filter: GoalFilter): boolean {
     switch (filter) {
@@ -34,7 +29,7 @@ function matchesFilter(goal: GoalSummary, filter: GoalFilter): boolean {
 // Mock-phase interactions: the sums below move to the server in M3/M4.
 function withPointsToday(kpis: Kpi[], points: number, target: number): Kpi[] {
     const isTargetHit = points >= target;
-    const percent = Math.min(100, Math.round((points / target) * 100));
+    const percent = Math.min(100, Math.round(percentOf(points, target)));
 
     return kpis.map((kpi) =>
         kpi.id === 'points-today'
@@ -62,7 +57,7 @@ export function useDashboardState(props: DashboardProps) {
     function pushLog(entry: Omit<LogEntry, 'id' | 'timeLabel'>) {
         const created: LogEntry = {
             ...entry,
-            id: `local-${Date.now()}`,
+            id: `local-${crypto.randomUUID()}`,
             timeLabel: formatMinutes(new Date()),
         };
 
@@ -125,20 +120,7 @@ export function useDashboardState(props: DashboardProps) {
         }
 
         setColumns((current) =>
-            current.map((column) => {
-                if (column.status === from) {
-                    return {
-                        ...column,
-                        cards: column.cards.filter(
-                            (candidate) => candidate.id !== cardId,
-                        ),
-                    };
-                }
-
-                return column.status === to
-                    ? { ...column, cards: [...column.cards, card] }
-                    : column;
-            }),
+            moveCardBetweenColumns(current, cardId, from, to),
         );
         pushLog({
             kind: to === 'done' ? 'done' : 'sent',

@@ -1,6 +1,7 @@
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { percentOf } from '@/lib/format';
 import { goalColorClass } from '@/lib/goal-color';
 import type { GoalColor, TaskStatus } from '@/types';
 
@@ -68,7 +69,7 @@ export function GoalProgressPanel({
                         <ProgressBar
                             size="sm"
                             className="overflow-hidden"
-                            percent={(counts[row.status] / totalCount) * 100}
+                            percent={percentOf(counts[row.status], totalCount)}
                             fillClassName={row.fillClassName}
                         />
                         <span className="text-right font-mono text-sm text-fg">

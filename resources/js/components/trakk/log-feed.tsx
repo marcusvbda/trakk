@@ -42,7 +42,10 @@ export function LogFeed({
                     <span className="whitespace-nowrap text-faint">
                         {entry.timeLabel}
                     </span>
-                    <span className={symbols[entry.kind].className}>
+                    <span
+                        aria-hidden="true"
+                        className={symbols[entry.kind].className}
+                    >
                         {symbols[entry.kind].glyph}
                     </span>
                     <span className="truncate text-log">{entry.text}</span>
