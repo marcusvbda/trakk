@@ -48,10 +48,10 @@ cd trakk
 - [x] `ScoreService`: day score, week score vs last week, 30-day series
 - [x] `StreakService`: current streak and record
 - [x] `ConsistencyService`: 12-week heat levels
-- [ ] `CompletionService`: complete / undo (idempotent per day)
-- [ ] `TaskService`: create, update, move between statuses (creates/deletes completion on done)
-- [ ] `GoalService`: create, update, change status
-- [ ] `ActivityLogger`
+- [x] `CompletionService`: complete / undo (idempotent per day)
+- [x] `TaskService`: create, update, move between statuses (creates/deletes completion on done)
+- [x] `GoalService`: create, update, change status
+- [x] `ActivityLogger`
 
 ## M3 — Dashboard (first usable day)
 

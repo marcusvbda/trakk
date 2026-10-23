@@ -85,13 +85,17 @@ All rules below are implemented in services and covered by unit tests. Dates use
 
 - Completing a task stores a completion with the task's points at that moment (snapshot).
 - Day score = sum of completion points for that date.
-- Un-checking an action or reopening a done project task deletes that day's completion.
-- Moving a project task to `done` creates its completion; moving it out of `done` deletes it.
+- Un-checking a recurring action deletes that day's completion.
+- **Project task done ⇔ completion.** Moving a project task to `done` sets `completed_at` and creates the completion for today with the task's points; moving it out of `done` clears `completed_at` and deletes that completion, whatever day it was. Checking a one-off task in Today moves it to `done`, and unchecking it moves it back to `todo`.
+- A one-off task has at most one completion. A recurring task has at most one per day and can be completed on any day, scheduled or not, so logging extra work never fails.
+- Completing a task that is already completed (same day) changes nothing and logs nothing.
 
 ### Tasks
 
 - Status: `todo`, `doing`, `done`. Recurring tasks only use done-per-day via completions; their `status` stays `todo`.
-- Recurrence: `days_of_week` (ISO 1–7). Null means one-off.
+- Recurrence: `days_of_week` (ISO 1–7). Null means one-off. Habit goals hold recurring tasks (at least one weekday); project goals hold one-off tasks.
+- Points are 1–5. A goal's type cannot change once it has tasks.
+- Checklist items are added at the end, can be renamed, ticked and deleted, and never score.
 - Overdue: a one-off task not `done` with `due_date` before today. Shown with how many days late (`−3d`).
 - "Due today": one-off task not done with `due_date` = today; shown in Today with `DUE TODAY`.
 - Today list = recurring tasks scheduled for today's weekday + one-off tasks due today + one-off tasks in `doing`. Sorted by `scheduled_time`, then priority of the goal.
@@ -114,7 +118,30 @@ All rules below are implemented in services and covered by unit tests. Dates use
 
 ### Reminders
 
-Kinds: `daily_brief` (morning summary of today), `evening_checkin` (what is still open, points left), `due_tomorrow` (tasks due tomorrow), `weekly_review` (week summary, goals off pace), `off_pace` (goals behind), `custom` (free text). Each has a time, days of week, channel (`telegram` | `email`), active flag, optional goal. A reminder is sent at most once per scheduled slot.
+- **Schedule.** A reminder has a `time`, one or more `channels` (`telegram`, `email`), and either `days_of_week` (recurring) or `fire_on` (once, a date), never both. It can be attached to a goal; `pace_summary` and `deadline_alert` must be. It is sent at most once per scheduled slot.
+- **Frequency label.** `daily` (7 days), `weekdays`, a single day name (`sunday`), a list of short names (`mon, wed, fri`), `day before` (kind `due_tomorrow`), or the date for once (`01 jan`).
+- **Kinds:** `daily_brief` (morning summary of today), `evening_checkin` (what is still open, points left), `due_tomorrow` (tasks due tomorrow), `weekly_review` (week summary, goals off pace), `off_pace` (goals behind), `pace_summary` (goal), `deadline_alert` (goal, usually once), `custom` (free text).
+- **Defaults**, created once with the owner (when the owner has no reminders): daily brief 07:30 daily · evening check-in 21:30 daily · tasks due tomorrow 18:00 daily (all telegram) · weekly review 10:00 sunday (telegram + email) · goals off pace 09:00 monday (email, inactive).
+- Pausing or enabling a reminder is logged.
+
+### Check-in
+
+The check-in sheet shows today's actions (checkable) and the day score. `close the day` logs one `check_in` activity with the score and the target, text `check-in · target hit` or `check-in · N pts short`. At most one check-in per day: closing the day again updates the first.
+
+### Replan
+
+For each selected overdue task, set `due_date` to today, tomorrow, next Monday (the Monday after today, so a Monday goes to the following one) or a picked date (today or later). One `replanned` activity per task. Done and recurring tasks cannot be replanned.
+
+### Suggestion (rule-based, no AI)
+
+Take the active goal with the lowest delta that has overdue tasks. `n` = its overdue count. Text: `knock out the {n} overdue {goal title lowercased} {task|tasks} {when}. It unblocks your most behind goal and clears {n} {item|items} from red.` where `when` = `today` if n ≤ 2 or today is Saturday or Sunday, else `on Saturday morning`. If no goal has overdue tasks but some task is overdue, use the task with the most days late: `clear "{task}" today, it is {d} days late.` Nothing overdue: no suggestion.
+
+### Activity log
+
+- **Activity → log kind:** `task_completed`, `check_in` → `done`, `checkin` · `task_undone`, `reminder_paused` → `undone` · `task_moved`, `reminder_sent`, `reminder_enabled`, `goal_created`, `task_created`, `replanned`, `mcp_call` → `sent` · `task_reopened` → `reopened` · `task_overdue`, `deadline_near`, `reminder_failed` → `warning`.
+- `timeLabel`: `HH:MM` today, `yday HH:MM` yesterday, otherwise `dd mon`, in the owner's timezone.
+- Activities carry a `source`: `web`, `mcp` or `system`. Activities from MCP end their text with ` · claude`.
+- The log survives deleting a goal or task.
 
 ## MCP tools (first version)
 

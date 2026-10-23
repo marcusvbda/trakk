@@ -53,12 +53,12 @@ app/
 ├── Policies/                 # GoalPolicy, TaskPolicy, ChecklistItemPolicy, ReminderPolicy (ownership)
 ├── Support/                  # Clock (today in the user's timezone), Labels (server-side formatting)
 └── Services/
-    ├── Goals/                # GoalService (create, update, archive), GoalProgressService (progress, expected, pace, projection)
+    ├── Goals/                # GoalService (create with unique slug, update, status, delete), GoalProgressService (progress, expected, pace, projection)
     ├── Tasks/                # TaskService (create, update, move, replan, checklist), CompletionService (complete, undo), OnTimeService (on time rate)
     ├── Scoring/              # ScoreService (day score, week score), StreakService, ConsistencyService (heatmap levels)
     ├── Dashboard/            # DashboardService (assembles the dashboard read model), GoalDetailService
-    ├── Activity/             # ActivityLogger
-    ├── Reminders/            # ReminderService (due reminders, message building)
+    ├── Activity/             # ActivityLogger (log entries, `· claude` suffix for MCP), CheckInService (close the day)
+    ├── Reminders/            # ReminderService (create, update, delete, toggle, defaults; later due reminders and message building)
     └── Telegram/             # TelegramClient (send message)
 ```
 
