@@ -13,7 +13,7 @@ it('redirects guests to the sign in page', function (string $uri) {
 ]);
 
 it('renders the dashboard for the owner', function () {
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(seedDemoOwner())
         ->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')

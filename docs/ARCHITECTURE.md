@@ -56,7 +56,7 @@ app/
     ├── Goals/                # GoalService (create with unique slug, update, status, delete), GoalProgressService (progress, expected, pace, projection)
     ├── Tasks/                # TaskService (create, update, move, replan, checklist), CompletionService (complete, undo), OnTimeService (on time rate)
     ├── Scoring/              # ScoreService (day score, week score), StreakService, ConsistencyService (heatmap levels)
-    ├── Dashboard/            # DashboardService (assembles the dashboard read model), GoalDetailService
+    ├── Dashboard/            # DashboardService (assembles the dashboard read model from KpiService, TodayListBuilder, AgendaBuilder, SuggestionService, FocusProjectService, StatusLineService), TopBarService + McpStatusService (shared top bar), GoalDetailService (S3)
     ├── Activity/             # ActivityLogger (log entries, `· claude` suffix for MCP), CheckInService (close the day)
     ├── Reminders/            # ReminderService (create, update, delete, toggle, defaults; later due reminders and message building)
     └── Telegram/             # TelegramClient (send message)
@@ -107,9 +107,13 @@ activities      id, user_id→users, goal_id?→goals, task_id?→tasks, type, m
 
 ## Read models
 
-The dashboard is one Inertia page fed by `DashboardService::for(User $user, CarbonImmutable $today): DashboardData`. It runs a fixed number of queries (no N+1), computes pace with `GoalProgressService`, and returns plain arrays/Data objects. Pages never compute business numbers; they only format them.
+The dashboard is one Inertia page fed by `DashboardService::for(User $user, CarbonImmutable $today): DashboardData`. It runs a fixed number of queries (no N+1; a test asserts at most 20 with the demo seed), computes pace with `GoalProgressService`, and returns `App\Data\Dashboard\DashboardData`, whose camelCase public properties are the Inertia props (`toProps()`). The shared `topBar` prop comes from `TopBarService` (date, year progress, MCP tool count and whether Claude logged anything in the last 24h). Pages never compute business numbers; they only format them.
 
-Mutations (check action, move card, toggle reminder) use Inertia `router` / `<Form>` with optimistic UI and `preserveScroll`. Props are reloaded partially (`only: [...]`) after each mutation.
+Mutations (check action, move card, toggle reminder) use Inertia `router` / `<Form>` with optimistic UI and `preserveScroll`. Props are reloaded partially (`only: [...]`) after each mutation. Optimistic updates use Inertia 3's `router.optimistic()` in `use-dashboard-state.ts`; they patch only what is cheap to show at once (the row, today's points, one log line) and the server's props replace them when the reload lands.
+
+Dashboard write routes (`routes/web.php`, all behind `auth` and the model policies): `POST /tasks/{task}/completions`, `DELETE /tasks/{task}/completions/today`, `PATCH /tasks/{task}/status`, `PATCH /reminders/{reminder}/active`, `POST /replan`, `POST /check-in`.
+
+Config read by the dashboard: `trakk.mcp_tools` (tool count shown in the top bar and footer; replaced by the real count of `TrakkServer` tools in S4) and `services.telegram.bot_token`.
 
 ## Time
 

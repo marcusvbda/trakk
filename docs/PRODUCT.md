@@ -56,7 +56,7 @@ Out (later):
 
 ## Business rules
 
-The rules below live in services and are covered by tests. The dashboard assembly (Today list, KPI cards, suggestion, overdue scan) uses them and arrives with the read models. Dates use the owner's timezone (`users.timezone`, default `Europe/Dublin`).
+The rules below live in services and are covered by tests. The dashboard assembly (Today list, KPI cards, suggestion) is `DashboardService`. Dates use the owner's timezone (`users.timezone`, default `Europe/Dublin`).
 
 ### Goal fields
 
@@ -99,16 +99,18 @@ The rules below live in services and are covered by tests. The dashboard assembl
 - Checklist items are added at the end, can be renamed, ticked and deleted, and never score.
 - Overdue: a one-off task not `done` with `due_date` before today. Shown with how many days late (`−3d`).
 - "Due today": one-off task not done with `due_date` = today; shown in Today with `DUE TODAY`.
-- Today list = recurring tasks scheduled for today's weekday + one-off tasks due today + one-off tasks in `doing`. Sorted by `scheduled_time`, then priority of the goal.
+- Today list = recurring tasks scheduled for today's weekday + one-off tasks due today + one-off tasks in `doing` without a due date + one-off tasks completed today (so a row you just checked stays and can be unchecked). Sorted by `scheduled_time` (tasks without one last), then priority of the goal, then position.
+- Overdue, Next 7 days, the suggestion and the KPIs only look at tasks of **active** goals.
+- **Goal name.** Wherever a task or goal is named next to other text (Today, Overdue, suggestion, log lines, focus project), the name is the goal title up to its first ` · `, lowercased: `Nomad visa · Spain` becomes `nomad visa`.
 
 ### KPIs
 
 | KPI | Rule |
 | --- | --- |
 | Points today | Day score vs daily target, with % of target. |
-| Streak | As defined above, with the all-time record. |
+| Streak | As defined above, with the all-time record. Sub-line: `record · N days`, or `start one today` when no day has ever been good. |
 | This week | Points from Monday to today vs the same span last week, as a % change (no percentage when last week had no points). |
-| Goals on pace | Active goals with `delta ≥ 0` / active goals. |
+| Goals on pace | Active goals with `delta ≥ 0` / active goals. No active goals: `—`. |
 | Overdue | Count of overdue tasks, with how many come from the most behind goal. |
 | On time · 30d | One-off tasks with a due date in the last 30 days (today included) that were done on or before it, in the owner's timezone / all such tasks. A task due today that is still open is not late yet and is left out. No such tasks: no percentage. |
 
@@ -135,7 +137,7 @@ For each selected overdue task, set `due_date` to today, tomorrow, next Monday (
 
 ### Suggestion (rule-based, no AI)
 
-Take the active goal with the lowest delta that has overdue tasks. `n` = its overdue count. Text: `knock out the {n} overdue {goal title lowercased} {task|tasks} {when}. It unblocks your most behind goal and clears {n} {item|items} from red.` where `when` = `today` if n ≤ 2 or today is Saturday or Sunday, else `on Saturday morning`. If no goal has overdue tasks but some task is overdue, use the task with the most days late: `clear "{task}" today, it is {d} days late.` Nothing overdue: no suggestion.
+Take the active goal with the lowest delta that has overdue tasks. `n` = its overdue count. Text: `knock out the {n} overdue {goal title lowercased} {task|tasks} {when}. It unblocks your most behind goal and clears {n} {item|items} from red.` where `when` = `today` if n ≤ 2 or today is Saturday or Sunday, else `on Saturday morning`. If no goal has overdue tasks but some task is overdue, use the task with the most days late: `clear "{task}" today, it is {d} days late.` Nothing overdue: no suggestion. Because Overdue only covers active goals, every overdue task belongs to an active goal, so the "task with the most days late" fallback of the spec never applies and is not built.
 
 ### Activity log
 

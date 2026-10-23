@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\Mocks\TopBarMock;
+use App\Data\Dashboard\TopBarData;
+use App\Services\Dashboard\TopBarService;
+use App\Support\Clock;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -43,8 +45,19 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'topBar' => fn () => $request->user() ? TopBarMock::props() : null,
+            'topBar' => fn () => $this->topBar($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    private function topBar(Request $request): ?TopBarData
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        return app(TopBarService::class)->for($user, app(Clock::class)->today($user));
     }
 }

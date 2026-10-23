@@ -114,9 +114,26 @@ final class Task extends Model
         $query->oneOff()->notDone()->whereDate('due_date', '<', $today);
     }
 
+    /**
+     * @param  Builder<Task>  $query
+     */
+    #[Scope]
+    protected function ownedBy(Builder $query, User $user): void
+    {
+        $query->whereHas('goal', fn (Builder $goals) => $goals->where('user_id', $user->id));
+    }
+
     public function isRecurring(): bool
     {
         return $this->days_of_week !== null;
+    }
+
+    public function isOverdueOn(CarbonImmutable $day): bool
+    {
+        return ! $this->isRecurring()
+            && $this->status !== TaskStatus::Done
+            && $this->due_date !== null
+            && $this->due_date->lessThan($day);
     }
 
     public function isScheduledOn(CarbonImmutable $day): bool

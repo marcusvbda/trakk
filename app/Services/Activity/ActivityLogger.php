@@ -38,7 +38,7 @@ final class ActivityLogger
     {
         $task->loadMissing('goal');
 
-        return $this->recordForTask($task, ActivityType::TaskUndone, $this->lower($task->title).' unchecked · '.$this->lower($task->goal->title), $source);
+        return $this->recordForTask($task, ActivityType::TaskUndone, $this->lower($task->title).' unchecked · '.$this->labels->goalName($task->goal), $source);
     }
 
     public function taskMoved(Task $task, TaskStatus $to, ActivitySource $source = ActivitySource::Web): Activity
@@ -55,7 +55,7 @@ final class ActivityLogger
     {
         $task->loadMissing('goal');
 
-        return $this->recordForTask($task, ActivityType::TaskCreated, $this->lower($task->title).' added · '.$this->lower($task->goal->title), $source);
+        return $this->recordForTask($task, ActivityType::TaskCreated, $this->lower($task->title).' added · '.$this->labels->goalName($task->goal), $source);
     }
 
     public function replanned(Task $task, CarbonImmutable $to, ActivitySource $source = ActivitySource::Web): Activity
@@ -125,7 +125,7 @@ final class ActivityLogger
 
     private function titleWithGoal(Task $task): string
     {
-        return $this->lower($task->title).' · '.$this->lower($task->goal->title);
+        return $this->lower($task->title).' · '.$this->labels->goalName($task->goal);
     }
 
     private function withSource(string $message, ActivitySource $source): string

@@ -11,6 +11,7 @@ use App\Models\Goal;
 use App\Models\Reminder;
 use App\Models\Task;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Str;
 
 final class Labels
 {
@@ -24,6 +25,12 @@ final class Labels
     public function fullDate(CarbonImmutable $date): string
     {
         return strtolower($date->format('d M Y'));
+    }
+
+    /** The goal title up to its first ` · `, lowercased: `Nomad visa · Spain` becomes `nomad visa`. */
+    public function goalName(Goal $goal): string
+    {
+        return mb_strtolower(Str::before($goal->title, ' · '));
     }
 
     public function dayLabel(CarbonImmutable $date): string

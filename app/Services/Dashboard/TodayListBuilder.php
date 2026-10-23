@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Dashboard;
+
+use App\Data\Dashboard\TodayActionData;
+use App\Enums\TaskStatus;
+use App\Models\Completion;
+use App\Models\Task;
+use App\Support\Labels;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
+
+/**
+ * Pure: expects `$task->goal` and `$task->completions` loaded.
+ */
+final class TodayListBuilder
+{
+    public function __construct(private readonly Labels $labels) {}
+
+    /**
+     * Recurring tasks scheduled for today's weekday, one-off tasks due today, one-off tasks in `doing` and
+     * one-off tasks finished today (so a checked row stays and can be unchecked), by time (tasks without one
+     * last), then goal priority.
+     *
+     * @param  Collection<int, Task>  $tasks
+     * @return list<TodayActionData>
+     */
+    public function build(Collection $tasks, CarbonImmutable $today): array
+    {
+        return $tasks
+            ->filter(fn (Task $task): bool => $this->isOnToday($task, $today))
+            ->sortBy([
+                fn (Task $a, Task $b): int => ($a->scheduled_time ?? '99:99') <=> ($b->scheduled_time ?? '99:99'),
+                fn (Task $a, Task $b): int => $a->goal->priority->rank() <=> $b->goal->priority->rank(),
+                fn (Task $a, Task $b): int => $a->position <=> $b->position,
+            ])
+            ->map(fn (Task $task): TodayActionData => new TodayActionData(
+                $task->id,
+                $task->title,
+                $this->labels->goalName($task->goal),
+                $task->goal->color,
+                $task->points,
+                $this->labels->todayTime($task, $today),
+                ! $task->isRecurring() && $task->due_date?->equalTo($today) === true,
+                $this->isDone($task, $today),
+            ))
+            ->values()
+            ->all();
+    }
+
+    private function isOnToday(Task $task, CarbonImmutable $today): bool
+    {
+        if ($task->isRecurring()) {
+            return $task->isScheduledOn($today);
+        }
+
+        return $task->due_date?->equalTo($today) === true
+            || ($task->status === TaskStatus::Doing && $task->due_date === null)
+            || $this->isCompletedOn($task, $today);
+    }
+
+    private function isDone(Task $task, CarbonImmutable $today): bool
+    {
+        return $task->isRecurring()
+            ? $this->isCompletedOn($task, $today)
+            : $task->status === TaskStatus::Done;
+    }
+
+    private function isCompletedOn(Task $task, CarbonImmutable $day): bool
+    {
+        return $task->completions->contains(fn (Completion $completion): bool => $completion->completed_on->equalTo($day));
+    }
+}

@@ -7,7 +7,9 @@ use App\Enums\TaskStatus;
 use App\Models\Completion;
 use App\Models\Goal;
 use App\Models\Task;
+use App\Models\User;
 use Carbon\CarbonImmutable;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Collection;
 
 /**
@@ -68,4 +70,36 @@ function habitGoal(string $start, string $due, int $perWeek, array $completionDa
         ->setRelation('completions', $index === 1 ? $completions : collect()));
 
     return $goal->setRelation('tasks', $taskModels);
+}
+
+/**
+ * Seeds the owner plus the demo data as of `$date` and returns the owner.
+ */
+function seedDemoOwner(string $date = '2026-10-23'): User
+{
+    config(['trakk.owner.email' => 'owner@example.com', 'trakk.owner.password' => 'secret-pass-123']);
+
+    test()->travelTo(day($date)->setTime(12, 0));
+    test()->seed(DatabaseSeeder::class);
+
+    return User::query()->sole();
+}
+
+/**
+ * @param  list<int>  $overdueByDays
+ */
+function goalWithOverdue(string $title, array $overdueByDays, int $doneTasks = 0): Goal
+{
+    $goal = new Goal([
+        'title' => $title,
+        'type' => GoalType::Project,
+        'start_date' => day('2026-07-01'),
+        'due_date' => day('2027-01-15'),
+    ]);
+
+    $tasks = collect($overdueByDays)
+        ->map(fn (int $days): Task => new Task(['status' => TaskStatus::Todo, 'due_date' => day('2026-10-23')->subDays($days)]))
+        ->concat(array_map(fn (): Task => new Task(['status' => TaskStatus::Done]), array_fill(0, $doneTasks, null)));
+
+    return $goal->setRelation('tasks', $tasks->values());
 }
