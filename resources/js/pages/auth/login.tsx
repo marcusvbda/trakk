@@ -1,94 +1,155 @@
-import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { Head, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+import { AuthPanel } from '@/components/trakk/auth-panel';
+import { BootLog } from '@/components/trakk/boot-log';
+import { TextField } from '@/components/trakk/text-field';
+import { TrakkButton } from '@/components/ui/trakk-button';
 import { store } from '@/routes/login';
 
-type Props = {
-    status?: string;
-};
+const throttleStatus = 429;
 
-export default function Login({ status }: Props) {
+export default function Login() {
+    const form = useForm({ email: '', password: '' });
+    const [isPasswordShown, setIsPasswordShown] = useState(false);
+    const [localError, setLocalError] = useState<string | null>(null);
+    const [throttleSeconds, setThrottleSeconds] = useState<number | null>(null);
+
+    const serverError =
+        form.errors.email || form.errors.password
+            ? 'invalid credentials'
+            : null;
+    const throttleError =
+        throttleSeconds === null
+            ? null
+            : `too many attempts · retry in ${throttleSeconds}s`;
+    const error = localError ?? throttleError ?? serverError;
+
+    function submit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setThrottleSeconds(null);
+
+        if (!form.data.email.trim() || !form.data.password) {
+            setLocalError('email and password are required');
+
+            return;
+        }
+
+        setLocalError(null);
+        form.post(store.url(), {
+            onHttpException: (response) => {
+                if (response.status !== throttleStatus) {
+                    return;
+                }
+
+                setThrottleSeconds(
+                    Number(response.headers['retry-after'] ?? 60),
+                );
+
+                return false;
+            },
+            onFinish: () => form.reset('password'),
+        });
+    }
+
     return (
         <>
-            <Head title="Log in" />
+            <Head title="Sign in" />
 
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
+            <BootLog />
 
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                </div>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
+            <AuthPanel>
+                <form
+                    onSubmit={submit}
+                    noValidate
+                    className="flex flex-col gap-3.5"
+                >
+                    <TextField
+                        id="email"
+                        name="email"
+                        label="Email"
+                        type="email"
+                        autoComplete="username"
+                        placeholder="you@domain.com"
+                        invalid={error !== null}
+                        value={form.data.email}
+                        onChange={(event) =>
+                            form.setData('email', event.target.value)
+                        }
+                    />
 
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
-                                <Label htmlFor="remember">Remember me</Label>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
-                                disabled={processing}
-                                data-test="login-button"
+                    <TextField
+                        id="password"
+                        name="password"
+                        label="Password"
+                        type={isPasswordShown ? 'text' : 'password'}
+                        autoComplete="current-password"
+                        placeholder="••••••••••"
+                        className="tracking-[0.08em]"
+                        invalid={error !== null}
+                        value={form.data.password}
+                        onChange={(event) =>
+                            form.setData('password', event.target.value)
+                        }
+                        action={
+                            <button
+                                type="button"
+                                aria-pressed={isPasswordShown}
+                                aria-label={
+                                    isPasswordShown
+                                        ? 'Hide password'
+                                        : 'Show password'
+                                }
+                                onClick={() =>
+                                    setIsPasswordShown((shown) => !shown)
+                                }
+                                className="h-[42px] w-14 flex-none border-l border-divider text-center font-mono text-xs tracking-[0.08em] text-muted uppercase transition-colors hover:text-fg"
                             >
-                                {processing && <Spinner />}
-                                Log in
-                            </Button>
-                        </div>
-                    </>
-                )}
-            </Form>
+                                {isPasswordShown ? 'hide' : 'show'}
+                            </button>
+                        }
+                    />
 
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
+                    {error && (
+                        <div
+                            role="alert"
+                            className="flex animate-fade-in items-center gap-2 rounded-control border border-danger-line px-2.5 py-[9px] font-mono text-sm text-danger"
+                        >
+                            <span>×</span>
+                            <span>{error}</span>
+                        </div>
+                    )}
+
+                    <TrakkButton
+                        type="submit"
+                        variant="accent"
+                        size="lg"
+                        aria-busy={form.processing}
+                        className="mt-1 transition-colors hover:bg-accent/8"
+                    >
+                        {form.processing ? (
+                            <>
+                                <span>authenticating</span>
+                                <span
+                                    aria-hidden="true"
+                                    className="animate-blink"
+                                >
+                                    _
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <span>sign in</span>
+                                <span aria-hidden="true">→</span>
+                            </>
+                        )}
+                    </TrakkButton>
+                </form>
+            </AuthPanel>
+
+            <div className="text-center font-mono text-xs text-faint">
+                v0.1 · tls · Europe/Dublin
+            </div>
         </>
     );
 }
-
-Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
-};

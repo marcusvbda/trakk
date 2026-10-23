@@ -207,6 +207,7 @@
     }
     body {
         @apply bg-canvas font-sans text-base font-light text-body antialiased;
+        line-height: normal;
     }
     ::placeholder {
         color: var(--color-faint);
@@ -223,4 +224,13 @@
         rgb(255 255 255 / 0.014) 0 1px,
         transparent 1px 3px
     );
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
 }
