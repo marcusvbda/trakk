@@ -337,6 +337,64 @@ it('saves the timezone, daily target and telegram link in settings', function ()
         ->screenshot(filename: 'settings-profile');
 });
 
+it('opens the settings from the user menu', function () {
+    signIn(1440, 900)
+        ->click('button[aria-haspopup="menu"]')
+        ->wait(0.5)
+        ->click('[data-test="settings-link"]')
+        ->wait(1)
+        ->assertPathIs('/settings/profile')
+        ->assertSee('Settings')
+        ->assertSee('daily points target')
+        ->screenshot(filename: 'settings-profile-desktop');
+});
+
+it('shows the settings on mobile', function () {
+    signIn(390, 844)
+        ->navigate('/settings/profile')
+        ->wait(1)
+        ->assertSee('Settings')
+        ->screenshot(filename: 'settings-profile-mobile');
+});
+
+it('changes the password from the security tab', function () {
+    signIn(1440, 900)
+        ->navigate('/settings/security')
+        ->wait(1)
+        ->assertSee('current password')
+        ->fill('#current_password', 'secret-pass-123')
+        ->fill('#password', 'new-secret-pass-456')
+        ->fill('#password_confirmation', 'new-secret-pass-456')
+        ->screenshot(filename: 'settings-security-desktop')
+        ->click('[data-test="update-password-button"]')
+        ->wait(1.2)
+        ->assertSee('password updated');
+});
+
+it('shows the password error under the field', function () {
+    signIn(1440, 900)
+        ->navigate('/settings/security')
+        ->wait(1)
+        ->fill('#current_password', 'wrong-password')
+        ->fill('#password', 'new-secret-pass-456')
+        ->fill('#password_confirmation', 'new-secret-pass-456')
+        ->click('[data-test="update-password-button"]')
+        ->wait(1.2)
+        ->assertSee('password is incorrect');
+});
+
+it('deletes the account after confirming with the password', function () {
+    signIn(1440, 900)
+        ->navigate('/settings/profile')
+        ->wait(1)
+        ->click('[data-test="delete-user-button"]')
+        ->fill('#delete-password', 'secret-pass-123')
+        ->screenshot(filename: 'settings-delete-account')
+        ->click('[data-test="confirm-delete-user-button"]')
+        ->wait(1.5)
+        ->assertPathIs('/login');
+});
+
 it('signs out from the user menu in the top bar', function () {
     $page = signIn(1440, 900)
         ->click('button[aria-haspopup="menu"]')

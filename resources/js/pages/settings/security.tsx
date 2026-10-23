@@ -1,132 +1,115 @@
-import { Form, Head } from '@inertiajs/react';
-import { useRef } from 'react';
-import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
+import { Head, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
+import { PasswordField } from '@/components/trakk/password-field';
+import { SettingsHeader } from '@/components/trakk/settings-header';
+import { Panel } from '@/components/ui/panel';
+import { PanelHeader } from '@/components/ui/panel-header';
+import { TrakkButton } from '@/components/ui/trakk-button';
+import { update } from '@/routes/user-password';
 
-// oxfmt-ignore
-type Props = {
-    passwordRules: string;
-} ;
+export default function Security({ passwordRules }: { passwordRules: string }) {
+    const form = useForm({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+    });
 
-export default function Security(props: Props) {
-    const passwordInput = useRef<HTMLInputElement>(null);
-    const currentPasswordInput = useRef<HTMLInputElement>(null);
+    function submit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        form.put(update.url(), {
+            preserveScroll: true,
+            onSuccess: () => form.reset(),
+            onError: (errors) => {
+                form.reset(
+                    'current_password',
+                    'password',
+                    'password_confirmation',
+                );
+                document
+                    .getElementById(
+                        errors.current_password
+                            ? 'current_password'
+                            : 'password',
+                    )
+                    ?.focus();
+            },
+        });
+    }
 
     return (
         <>
             <Head title="Security settings" />
 
-            <h1 className="sr-only">Security settings</h1>
+            <SettingsHeader />
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
-                />
-
-                <Form
-                    {...SecurityController.update.form()}
-                    options={{
-                        preserveScroll: true,
-                    }}
-                    resetOnError={[
-                        'password',
-                        'password_confirmation',
-                        'current_password',
-                    ]}
-                    resetOnSuccess
-                    onError={(errors) => {
-                        if (errors.password) {
-                            passwordInput.current?.focus();
-                        }
-
-                        if (errors.current_password) {
-                            currentPasswordInput.current?.focus();
-                        }
-                    }}
-                    className="space-y-6"
+            <form onSubmit={submit} className="flex flex-col gap-3.5">
+                <Panel
+                    aria-labelledby="h-password"
+                    className="flex flex-col gap-3.5"
                 >
-                    {({ errors, processing }) => (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="current_password">
-                                    Current password
-                                </Label>
+                    <PanelHeader
+                        id="h-password"
+                        title="Password"
+                        className="mb-0"
+                    >
+                        <span className="font-mono text-xs text-muted">
+                            use a long, random one
+                        </span>
+                    </PanelHeader>
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3.5">
+                        <PasswordField
+                            id="current_password"
+                            label="current password"
+                            autoComplete="current-password"
+                            value={form.data.current_password}
+                            error={form.errors.current_password}
+                            onChange={(event) =>
+                                form.setData(
+                                    'current_password',
+                                    event.target.value,
+                                )
+                            }
+                        />
+                        <PasswordField
+                            id="password"
+                            label="new password"
+                            autoComplete="new-password"
+                            passwordrules={passwordRules}
+                            value={form.data.password}
+                            error={form.errors.password}
+                            onChange={(event) =>
+                                form.setData('password', event.target.value)
+                            }
+                        />
+                        <PasswordField
+                            id="password_confirmation"
+                            label="confirm password"
+                            autoComplete="new-password"
+                            passwordrules={passwordRules}
+                            value={form.data.password_confirmation}
+                            error={form.errors.password_confirmation}
+                            onChange={(event) =>
+                                form.setData(
+                                    'password_confirmation',
+                                    event.target.value,
+                                )
+                            }
+                        />
+                    </div>
+                </Panel>
 
-                                <PasswordInput
-                                    id="current_password"
-                                    ref={currentPasswordInput}
-                                    name="current_password"
-                                    className="mt-1 block w-full"
-                                    autoComplete="current-password"
-                                    placeholder="Current password"
-                                />
-
-                                <InputError message={errors.current_password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">New password</Label>
-
-                                <PasswordInput
-                                    id="password"
-                                    ref={passwordInput}
-                                    name="password"
-                                    className="mt-1 block w-full"
-                                    autoComplete="new-password"
-                                    placeholder="New password"
-                                    passwordrules={props.passwordRules}
-                                />
-
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-
-                                <PasswordInput
-                                    id="password_confirmation"
-                                    name="password_confirmation"
-                                    className="mt-1 block w-full"
-                                    autoComplete="new-password"
-                                    placeholder="Confirm password"
-                                    passwordrules={props.passwordRules}
-                                />
-
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-password-button"
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </Form>
-            </div>
+                <div className="flex justify-end">
+                    <TrakkButton
+                        type="submit"
+                        variant="accent"
+                        disabled={form.processing}
+                        aria-busy={form.processing}
+                        data-test="update-password-button"
+                    >
+                        save
+                    </TrakkButton>
+                </div>
+            </form>
         </>
     );
 }
-
-Security.layout = {
-    breadcrumbs: [
-        {
-            title: 'Security settings',
-            href: edit(),
-        },
-    ],
-};

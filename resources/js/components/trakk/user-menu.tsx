@@ -1,7 +1,8 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { firstName, truncate } from '@/lib/format';
 import { signOut } from '@/lib/sign-out';
+import { edit as settings } from '@/routes/profile';
 
 const userNameLimit = 10;
 
@@ -35,6 +36,16 @@ export function UserMenu() {
                             {auth.user.email}
                         </span>
                     </DropdownMenu.Label>
+                    <DropdownMenu.Item
+                        onSelect={() => router.visit(settings())}
+                        data-test="settings-link"
+                        className="mt-1 flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-2.5 text-[11px] text-fg-2 outline-none data-[highlighted]:bg-hover"
+                    >
+                        <span aria-hidden="true" className="text-accent">
+                            ›
+                        </span>
+                        settings
+                    </DropdownMenu.Item>
                     <DropdownMenu.Item
                         onSelect={signOut}
                         data-test="logout-button"

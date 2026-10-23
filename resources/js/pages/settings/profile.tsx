@@ -1,191 +1,158 @@
-import { Form, Head, usePage } from '@inertiajs/react';
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
-import Heading from '@/components/heading';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import type { FormEvent } from 'react';
+import { DeleteAccountPanel } from '@/components/trakk/delete-account-panel';
 import { EmptyState } from '@/components/trakk/empty-state';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/profile';
-import type { Auth } from '@/types';
+import { SelectField } from '@/components/trakk/select-field';
+import { SettingsHeader } from '@/components/trakk/settings-header';
+import { TextField } from '@/components/trakk/text-field';
+import { Panel } from '@/components/ui/panel';
+import { PanelHeader } from '@/components/ui/panel-header';
+import { TrakkButton } from '@/components/ui/trakk-button';
+import { update } from '@/routes/profile';
 
-type PageProps = {
-    auth: Auth;
-    timezones: string[];
-};
-
-export default function Profile() {
-    const { auth, timezones } = usePage<PageProps>().props;
+export default function Profile({ timezones }: { timezones: string[] }) {
+    const { auth } = usePage().props;
+    const form = useForm({
+        name: auth.user.name,
+        email: auth.user.email,
+        timezone: auth.user.timezone,
+        daily_points_target: String(auth.user.daily_points_target),
+        telegram_chat_id: auth.user.telegram_chat_id ?? '',
+    });
     const isTelegramLinked = Boolean(auth.user.telegram_chat_id);
+
+    function submit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        form.patch(update.url(), { preserveScroll: true });
+    }
 
     return (
         <>
             <Head title="Profile settings" />
 
-            <h1 className="sr-only">Profile settings</h1>
+            <SettingsHeader />
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Profile"
-                    description="Update your name, email, timezone, daily target and telegram link"
-                />
+            <form onSubmit={submit} className="flex flex-col gap-3.5">
+                <div className="flex flex-wrap items-stretch gap-3.5">
+                    <Panel
+                        aria-labelledby="h-profile"
+                        className="flex flex-[1_1_420px] flex-col gap-3.5"
+                    >
+                        <PanelHeader
+                            id="h-profile"
+                            title="Profile"
+                            className="mb-0"
+                        />
+                        <TextField
+                            id="name"
+                            label="name"
+                            autoComplete="name"
+                            value={form.data.name}
+                            error={form.errors.name}
+                            onChange={(event) =>
+                                form.setData('name', event.target.value)
+                            }
+                        />
+                        <TextField
+                            id="email"
+                            label="email"
+                            type="email"
+                            autoComplete="username"
+                            value={form.data.email}
+                            error={form.errors.email}
+                            onChange={(event) =>
+                                form.setData('email', event.target.value)
+                            }
+                        />
+                        <SelectField
+                            id="timezone"
+                            label="timezone"
+                            value={form.data.timezone}
+                            error={form.errors.timezone}
+                            options={timezones.map((zone) => ({
+                                value: zone,
+                                label: zone,
+                            }))}
+                            onChange={(event) =>
+                                form.setData('timezone', event.target.value)
+                            }
+                        />
+                        <TextField
+                            id="daily_points_target"
+                            label="daily points target"
+                            type="number"
+                            min={1}
+                            max={50}
+                            value={form.data.daily_points_target}
+                            error={form.errors.daily_points_target}
+                            onChange={(event) =>
+                                form.setData(
+                                    'daily_points_target',
+                                    event.target.value,
+                                )
+                            }
+                        />
+                    </Panel>
 
-                <Form
-                    {...ProfileController.update.form()}
-                    options={{
-                        preserveScroll: true,
-                    }}
-                    className="space-y-6"
-                >
-                    {({ processing, errors }) => (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                    <Panel
+                        aria-labelledby="h-telegram"
+                        className="flex flex-[1_1_320px] flex-col gap-3.5"
+                    >
+                        <PanelHeader
+                            id="h-telegram"
+                            title="Telegram"
+                            className="mb-0"
+                        >
+                            <span className="font-mono text-xs text-muted">
+                                where reminders arrive
+                            </span>
+                        </PanelHeader>
+                        <TextField
+                            id="telegram_chat_id"
+                            label="telegram chat id"
+                            inputMode="numeric"
+                            placeholder="filled in by telegram:link"
+                            value={form.data.telegram_chat_id}
+                            error={form.errors.telegram_chat_id}
+                            onChange={(event) =>
+                                form.setData(
+                                    'telegram_chat_id',
+                                    event.target.value,
+                                )
+                            }
+                        />
+                        {isTelegramLinked ? (
+                            <EmptyState
+                                glyph="positive"
+                                hint="relink any time with php artisan telegram:link"
+                            >
+                                linked
+                            </EmptyState>
+                        ) : (
+                            <EmptyState glyph="gap">
+                                not linked · run{' '}
+                                <code className="text-fg">
+                                    php artisan telegram:link
+                                </code>
+                            </EmptyState>
+                        )}
+                    </Panel>
+                </div>
 
-                                <Input
-                                    id="name"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.name}
-                                    name="name"
-                                    required
-                                    autoComplete="name"
-                                    placeholder="Full name"
-                                />
+                <div className="flex justify-end">
+                    <TrakkButton
+                        type="submit"
+                        variant="accent"
+                        disabled={form.processing}
+                        aria-busy={form.processing}
+                        data-test="update-profile-button"
+                    >
+                        save
+                    </TrakkButton>
+                </div>
+            </form>
 
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.name}
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.email}
-                                    name="email"
-                                    required
-                                    autoComplete="username"
-                                    placeholder="Email address"
-                                />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.email}
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="timezone">Timezone</Label>
-
-                                <select
-                                    id="timezone"
-                                    name="timezone"
-                                    defaultValue={auth.user.timezone}
-                                    className="mt-1 h-9 w-full rounded-control border border-line bg-field px-3 font-mono text-[12px] text-fg outline-none focus:border-accent"
-                                >
-                                    {timezones.map((zone) => (
-                                        <option key={zone} value={zone}>
-                                            {zone}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.timezone}
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="daily_points_target">
-                                    Daily points target
-                                </Label>
-
-                                <Input
-                                    id="daily_points_target"
-                                    type="number"
-                                    min={1}
-                                    max={50}
-                                    className="mt-1 block w-full font-mono"
-                                    defaultValue={auth.user.daily_points_target}
-                                    name="daily_points_target"
-                                    required
-                                />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.daily_points_target}
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="telegram_chat_id">
-                                    Telegram chat id
-                                </Label>
-
-                                <Input
-                                    id="telegram_chat_id"
-                                    inputMode="numeric"
-                                    className="mt-1 block w-full font-mono"
-                                    defaultValue={
-                                        auth.user.telegram_chat_id ?? ''
-                                    }
-                                    name="telegram_chat_id"
-                                    placeholder="filled in by telegram:link"
-                                />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.telegram_chat_id}
-                                />
-
-                                {isTelegramLinked ? (
-                                    <EmptyState
-                                        glyph="positive"
-                                        size="compact"
-                                        hint="relink any time with php artisan telegram:link"
-                                    >
-                                        linked
-                                    </EmptyState>
-                                ) : (
-                                    <EmptyState glyph="gap" size="compact">
-                                        not linked · run{' '}
-                                        <code className="text-fg">
-                                            php artisan telegram:link
-                                        </code>
-                                    </EmptyState>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-profile-button"
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </Form>
-            </div>
-
-            <DeleteUser />
+            <DeleteAccountPanel />
         </>
     );
 }
-
-Profile.layout = {
-    breadcrumbs: [
-        {
-            title: 'Profile settings',
-            href: edit(),
-        },
-    ],
-};

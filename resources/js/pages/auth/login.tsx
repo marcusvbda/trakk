@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { AuthPanel } from '@/components/trakk/auth-panel';
 import { BootLog } from '@/components/trakk/boot-log';
+import { PasswordField } from '@/components/trakk/password-field';
 import { TextField } from '@/components/trakk/text-field';
 import { TrakkButton } from '@/components/ui/trakk-button';
 import { store } from '@/routes/login';
@@ -12,7 +13,6 @@ const throttleStatus = 429;
 export default function Login() {
     const { version } = usePage().props;
     const form = useForm({ email: '', password: '' });
-    const [isPasswordShown, setIsPasswordShown] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
     const [throttleSeconds, setThrottleSeconds] = useState<number | null>(null);
 
@@ -79,35 +79,16 @@ export default function Login() {
                         }
                     />
 
-                    <TextField
+                    <PasswordField
                         id="password"
                         name="password"
                         label="Password"
-                        type={isPasswordShown ? 'text' : 'password'}
                         autoComplete="current-password"
                         placeholder="••••••••••"
-                        className="tracking-[0.08em]"
                         invalid={error !== null}
                         value={form.data.password}
                         onChange={(event) =>
                             form.setData('password', event.target.value)
-                        }
-                        action={
-                            <button
-                                type="button"
-                                aria-pressed={isPasswordShown}
-                                aria-label={
-                                    isPasswordShown
-                                        ? 'Hide password'
-                                        : 'Show password'
-                                }
-                                onClick={() =>
-                                    setIsPasswordShown((shown) => !shown)
-                                }
-                                className="h-[42px] w-14 flex-none border-l border-divider text-center font-mono text-xs tracking-[0.08em] text-muted uppercase transition-colors hover:text-fg"
-                            >
-                                {isPasswordShown ? 'hide' : 'show'}
-                            </button>
                         }
                     />
 

@@ -13,7 +13,7 @@ paths:
 - Arbitrary values are allowed only for exact sizes from DESIGN.md (e.g. `basis-[440px]`, `size-[13px]`).
 - No shadows, gradients, blur, rounded corners above 6px, or font weights above 500.
 - The page container (`TrakkLayout`, `main`) has no `max-w-*`: content fills the full viewport width. Never reintroduce `max-w-[1440px]` or similar, even though the prototypes have it (owner decision).
-- Starter-kit pages (auth, settings) may keep shadcn/ui components, restyled to the tokens. Trakk screens use `components/ui` and `components/trakk`.
+- No screen uses shadcn/ui default styling. Every authenticated page, settings included, is a Trakk screen on `TrakkLayout` built from `components/ui` and `components/trakk` (owner decision). Reach account pages from the `UserMenu`, never only by URL.
 
 ## Structure
 

@@ -70,7 +70,7 @@ Every item below is a checklist entry for the sessions. "Source" is what produce
 
 ### Settings (`/settings/profile`)
 
-Add to the existing profile form: `timezone` (select of IANA zones, default `Europe/Dublin`), `daily points target` (1–50), `telegram chat id` with a `send test` button (`POST /settings/telegram/test`) and the link instructions (run `php artisan telegram:link`). Styled with Trakk tokens.
+Settings is a Trakk screen (panels, `TextField`, tabs; reached from the user menu), not the starter-kit look. Add to the profile form: `timezone` (select of IANA zones, default `Europe/Dublin`), `daily points target` (1–50), `telegram chat id` with a `send test` button (`POST /settings/telegram/test`) and the link instructions (run `php artisan telegram:link`). Styled with Trakk tokens.
 
 ### Goals list (`/goals`)
 
