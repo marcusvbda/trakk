@@ -1,6 +1,6 @@
 # Trakk — Design System
 
-The approved design is a dense, dark, terminal-flavoured dashboard: thin 1px lines, small type, light font weights, many compact cards, almost no imagery, and small motions that make it feel alive. **Implementations must match it exactly.** When this document and the prototype disagree, the prototype wins; fix this document.
+The approved design is a dense, dark, terminal-flavoured dashboard: thin 1px lines, small type, light font weights, many compact cards, almost no imagery, and small motions that make it feel alive. **Implementations must match it exactly.** When this document and the prototype disagree, the prototype wins; fix this document. The one standing exception is the page width: the prototypes cap the page at 1440px, the app does not (see Layout).
 
 ## Sources of truth
 
@@ -156,7 +156,7 @@ Lowercase is the default voice for mono metadata ("due 24 oct", "on pace +2%"). 
 
 ## Layout
 
-- Page: `bg-canvas`, optional `scanlines` overlay, content `max-w-[1440px] mx-auto px-5`, vertical gap 14px between rows, 28px bottom padding.
+- Page: `bg-canvas`, optional `scanlines` overlay, content `px-5`, vertical gap 14px between rows, 28px bottom padding. **The page container has no max-width: content always fills the full viewport width (owner decision). Never add `max-w-*` to the page container or `main`, even though the prototypes cap it at 1440px; this is a deliberate deviation from them.**
 - Rows are flex containers with `flex-wrap` and `gap-3.5` (14px). Each panel has `flex: <grow> 1 <basis>` and `min-w-0`, so the layout stacks on mobile without breakpoints.
 - Grids: KPI strip `grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5`; goal cards `grid-cols-[repeat(auto-fill,minmax(min(100%,380px),1fr))] gap-2.5`.
 - Panel: `bg-surface border border-line rounded-panel`, padding `12px 14px` (lists use `12px 10px 10px` so row hover reaches the edge). The heading row has `pb-2.5 mb-1 border-b border-divider`.

@@ -26,6 +26,7 @@ description: Implement or change a Trakk screen or component so it matches the a
 
 ## 4. Verify
 
+- Do not cap the page width: the layout container has no `max-w-*` (owner decision, deliberately different from the prototypes).
 - Run `composer run dev`, open the page at 1440px and 390px wide and compare with the reference PNGs side by side: spacing, font sizes and weights, colors, borders, alignment, truncation.
 - Check hover, focus-visible and empty states.
 - `npm run types` and `npm run lint` must pass.

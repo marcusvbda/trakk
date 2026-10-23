@@ -79,7 +79,7 @@ If a script above does not exist yet, add it to `composer.json` / `package.json`
 
 ## Design fidelity
 
-The approved design must be reproduced exactly. Use the tokens from `docs/DESIGN.md` (already in `resources/css/app.css`), never raw hex values or default Tailwind greys. Build Trakk screens from the components listed in DESIGN.md. Before calling a screen done, compare it side by side with the matching reference PNG at 1440px and 390px.
+The approved design must be reproduced exactly. Use the tokens from `docs/DESIGN.md` (already in `resources/css/app.css`), never raw hex values or default Tailwind greys. Build Trakk screens from the components listed in DESIGN.md. Before calling a screen done, compare it side by side with the matching reference PNG at 1440px and 390px. Exception, by owner decision: the page container has no `max-w-*` (full width on wide screens), so do not add one back to match the prototype or the PNGs; judge the 1440px comparison at a 1440px viewport only.
 
 ## Definition of done
 

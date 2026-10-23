@@ -12,6 +12,7 @@ paths:
 - Colors, fonts, sizes, radii and animations come only from the `@theme` tokens in `resources/css/app.css`. No hex values in components, no default Tailwind palette (`gray-*`, `zinc-*`, `emerald-*`), no arbitrary colors.
 - Arbitrary values are allowed only for exact sizes from DESIGN.md (e.g. `basis-[440px]`, `size-[13px]`).
 - No shadows, gradients, blur, rounded corners above 6px, or font weights above 500.
+- The page container (`TrakkLayout`, `main`) has no `max-w-*`: content fills the full viewport width. Never reintroduce `max-w-[1440px]` or similar, even though the prototypes have it (owner decision).
 - Starter-kit pages (auth, settings) may keep shadcn/ui components, restyled to the tokens. Trakk screens use `components/ui` and `components/trakk`.
 
 ## Structure
