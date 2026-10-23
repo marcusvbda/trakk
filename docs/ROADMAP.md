@@ -55,16 +55,16 @@ cd trakk
 
 ## M3 — Dashboard (first usable day)
 
-- [ ] `TrakkLayout`: top bar with live clock, year progress, command bar shell, `+ goal`, `check-in`
-- [ ] UI primitives and Trakk components from DESIGN.md
-- [ ] `DashboardService` read model (fixed query count)
-- [ ] Dashboard page identical to `docs/design/reference/dashboard-desktop.png` and `dashboard-mobile.png`
-- [ ] Check/uncheck today's actions (optimistic) with feature tests
-- [ ] Goal filter tabs
+- [x] `TrakkLayout`: top bar with live clock, year progress, command bar shell, `+ goal`, `check-in`
+- [x] UI primitives and Trakk components from DESIGN.md
+- [x] `DashboardService` read model (fixed query count)
+- [x] Dashboard page identical to `docs/design/reference/dashboard-desktop.png` and `dashboard-mobile.png`
+- [x] Check/uncheck today's actions (optimistic) with feature tests
+- [x] Goal filter tabs
 
 ## M3a — Mocked screens
 
-Login, dashboard and goal detail built against PHP mocks (`app/Support/Mocks/DashboardMock.php`, `GoalDetailMock.php`) shaped like the future Resources. Interactions are local React state only. M3 and M4 replace the mocks with services and real mutations; the sums and counts in `use-dashboard-state.ts` and `use-goal-board-state.ts` move to the server then.
+Login, dashboard and goal detail were first built against PHP mocks. M3 replaced the dashboard and top bar mocks with `DashboardService` and `TopBarService`; `GoalDetailMock` and the local sums in `use-goal-board-state.ts` stay until M4 (S3).
 
 - [x] `AuthLayout`, `LogoMark`, `TextField` and the sign-in screen (real Fortify login, error and throttle states)
 - [x] UI primitives (`Panel`, `PanelHeader`, `Chip`, `ProgressBar`, `TrakkButton`, `TrakkCheckbox`, `TrakkToggle`) and `TrakkLayout`

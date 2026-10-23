@@ -1,4 +1,6 @@
+import { EmptyState } from '@/components/trakk/empty-state';
 import { KanbanCard } from '@/components/trakk/kanban-card';
+import { UnavailableButton } from '@/components/trakk/unavailable-button';
 import { cn } from '@/lib/utils';
 import type { KanbanColumnData, TaskStatus } from '@/types';
 
@@ -7,6 +9,7 @@ type ColumnMeta = {
     dotClassName: string;
     next: TaskStatus | null;
     nextLabel: string;
+    emptyText: string;
 };
 
 const columnMeta: Record<TaskStatus, ColumnMeta> = {
@@ -15,25 +18,28 @@ const columnMeta: Record<TaskStatus, ColumnMeta> = {
         dotClassName: 'text-muted',
         next: 'doing',
         nextLabel: 'doing',
+        emptyText: 'no tasks',
     },
     doing: {
         label: 'doing',
         dotClassName: 'text-warning',
         next: 'done',
         nextLabel: 'done',
+        emptyText: 'nothing in progress',
     },
     done: {
         label: 'done',
         dotClassName: 'text-accent',
         next: null,
         nextLabel: '',
+        emptyText: 'nothing done yet',
     },
 };
 
 type KanbanBoardProps = {
     columns: KanbanColumnData[];
     variant: 'compact' | 'full';
-    onMove: (cardId: string, from: TaskStatus, to: TaskStatus) => void;
+    onMove: (cardId: number, from: TaskStatus, to: TaskStatus) => void;
 };
 
 export function KanbanBoard({ columns, variant, onMove }: KanbanBoardProps) {
@@ -71,6 +77,20 @@ export function KanbanBoard({ columns, variant, onMove }: KanbanBoardProps) {
                                     {column.cards.length + hiddenCount}
                                 </span>
                             </div>
+                            {column.cards.length === 0 && hiddenCount === 0 && (
+                                <EmptyState
+                                    size="compact"
+                                    action={
+                                        column.status === 'todo' ? (
+                                            <UnavailableButton size="sm">
+                                                + task
+                                            </UnavailableButton>
+                                        ) : undefined
+                                    }
+                                >
+                                    {meta.emptyText}
+                                </EmptyState>
+                            )}
                             {column.cards.map((card) => (
                                 <KanbanCard
                                     key={card.id}

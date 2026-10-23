@@ -150,7 +150,7 @@ Build with existing tokens and components (`Panel`, `PanelHeader`, `TextField`, 
 - Line 1: mono 11px. Leading glyph: `›` in `accent` for neutral ("nothing yet"), `✓` in `accent` for positive ("all clear"), `!` in `warning` for a gap the owner should fix. Text in `body`.
 - Line 2 (optional): mono 10px `faint`, one useful fact (the next deadline, what will appear here).
 - Action (optional): one `TrakkButton size="sm"` that opens the right sheet.
-- Terminal touch: the log-style empties end with a blinking accent `_`.
+- No blinking cursor or `_` anywhere, including log-style empties (owner decision in DESIGN.md).
 - `role="status"`; never a spinner, illustration or emoji.
 
 **Charts and grids keep their structure:** the points chart draws 30 placeholder bars (2px, `bar-low`) and the target line; the heatmap draws all cells at `heat-0`; the pace chart draws axes and the expected line. A caption sits on top of the structure.
@@ -175,7 +175,7 @@ Build with existing tokens and components (`Panel`, `PanelHeader`, `TextField`, 
 | Reminders | none | `› no reminders` · `telegram not linked · settings` when no chat id · `+ reminder` |
 | Focus project | no active project | `› no active project` · `the most behind project shows its board here` · `+ goal` |
 | Kanban column | empty | to do `› no tasks · + task`, doing `› nothing in progress`, done `› nothing done yet` |
-| Log | empty | `› nothing logged yet_` |
+| Log | empty | `› nothing logged yet` |
 | Footer status | no reminders / telegram off | `no reminders set` / `telegram off · link in settings` |
 | First run (zero goals) | dashboard | first-run panel above everything: `› trakk init` + three steps (create a goal, add tasks, link telegram), each with its button and a `✓` once done; other panels show their own empty states |
 | Goal · objective | no description / no done criteria | `› no objective yet · edit` / `! done when: not defined · a goal without an end never reaches 100%` |
@@ -184,7 +184,7 @@ Build with existing tokens and components (`Panel`, `PanelHeader`, `TextField`, 
 | Goal · board | no tasks at all | one `EmptyState` across the board: `› no tasks yet` · `break the goal into steps` · `+ task` |
 | Goal · habit actions | none | `› no actions yet` · `add what you will repeat each week` · `+ task` |
 | Goal · reminders | none | `› no reminders for this goal` · `+ reminder` |
-| Goal · history | none | `› no history yet_` |
+| Goal · history | none | `› no history yet` |
 | Goals list (`/goals`) | group empty | one line per group: `› no paused goals` (groups never disappear) |
 | Command palette | no matches | `› no matches for "{q}"` · `try a goal or task name` |
 | Task sheet · checklist | none | `› add the first item` (the inline add field sits below) |

@@ -18,7 +18,7 @@ export function useGoalBoardState(props: GoalDetailProps) {
     const [columns, setColumns] = useState(props.board.columns);
     const [history, setHistory] = useState(props.history);
 
-    function moveTask(cardId: string, from: TaskStatus, to: TaskStatus) {
+    function moveTask(cardId: number, from: TaskStatus, to: TaskStatus) {
         const card = columns
             .find((column) => column.status === from)
             ?.cards.find((candidate) => candidate.id === cardId);
@@ -33,7 +33,7 @@ export function useGoalBoardState(props: GoalDetailProps) {
         setHistory((entries) =>
             [
                 {
-                    id: `local-${crypto.randomUUID()}`,
+                    id: -Date.now(),
                     timeLabel: `today ${formatMinutes(new Date())}`,
                     kind: historyKind(to),
                     text: `${card.title.toLowerCase()} → ${taskStatusLabel[to]}`,

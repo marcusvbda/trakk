@@ -30,7 +30,12 @@ export function GoalCard({ goal }: { goal: GoalSummary }) {
                 </Chip>
             </div>
             <h3 className="text-lg leading-[1.3] font-normal text-fg">
-                {goal.title}
+                <Link
+                    href={show({ goal: goal.slug })}
+                    className="after:absolute after:inset-0"
+                >
+                    {goal.title}
+                </Link>
             </h3>
             <div className="font-mono text-xs text-muted">
                 {goal.startLabel} → {goal.dueLabel} · {goal.daysLeft}d left ·{' '}
@@ -62,8 +67,8 @@ export function GoalCard({ goal }: { goal: GoalSummary }) {
                 )}
                 {goal.hasBoard && (
                     <Link
-                        href={show({ goal: goal.id })}
-                        className="font-mono text-sm text-accent-soft hover:text-accent-hover"
+                        href={show({ goal: goal.slug })}
+                        className="relative font-mono text-sm text-accent-soft hover:text-accent-hover"
                     >
                         open board →
                     </Link>

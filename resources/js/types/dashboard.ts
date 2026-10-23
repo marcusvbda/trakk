@@ -12,6 +12,8 @@ import type {
 export type TopBarData = {
     dateLabel: string;
     yearProgress: number;
+    mcpTools: number;
+    isMcpLive: boolean;
 };
 
 export type Kpi = {
@@ -27,7 +29,7 @@ export type Kpi = {
 };
 
 export type TodayAction = {
-    id: string;
+    id: number;
     title: string;
     goalName: string;
     goalColor: GoalColor;
@@ -38,7 +40,7 @@ export type TodayAction = {
 };
 
 export type OverdueItem = {
-    id: string;
+    id: number;
     title: string;
     goalName: string;
     goalColor: GoalColor;
@@ -61,7 +63,8 @@ export type WeekProgress = {
 };
 
 export type GoalSummary = {
-    id: string;
+    id: number;
+    slug: string;
     title: string;
     type: GoalType;
     priority: Priority;
@@ -107,7 +110,7 @@ export type ConsistencyData = {
 };
 
 export type ReminderItem = {
-    id: string;
+    id: number;
     timeLabel: string;
     label: string;
     frequencyLabel: string;
@@ -116,7 +119,7 @@ export type ReminderItem = {
 };
 
 export type FocusProject = {
-    goalId: string;
+    goalSlug: string;
     title: string;
     color: GoalColor;
     doneCount: number;
@@ -127,22 +130,36 @@ export type FocusProject = {
 
 export type StatusLine = {
     mcpTools: number;
-    nextReminderAt: string;
+    nextReminderAt: string | null;
+    isTelegramLinked: boolean;
+    isTelegramActive: boolean;
+};
+
+export type FirstRun = {
+    isTelegramLinked: boolean;
+};
+
+export type EmptyHints = {
+    nextActionDay: string | null;
+    nextDeadline: { title: string; dateLabel: string } | null;
 };
 
 export type DashboardProps = {
     dailyTarget: number;
+    pointsToday: number;
     kpis: Kpi[];
     actions: TodayAction[];
     overdue: OverdueItem[];
-    suggestion: string;
+    suggestion: string | null;
     upcoming: UpcomingItem[];
     goalsSummary: { active: number; onPace: number };
     goals: GoalSummary[];
     pointsChart: PointsChartData;
     consistency: ConsistencyData;
     reminders: ReminderItem[];
-    focusProject: FocusProject;
+    focusProject: FocusProject | null;
     log: LogEntry[];
     status: StatusLine;
+    firstRun: FirstRun | null;
+    hints: EmptyHints;
 };

@@ -24,6 +24,9 @@ const dayLabels = ['mon', '', 'wed', '', 'fri', '', 'sun'];
 const levels: HeatLevel[] = [0, 1, 2, 3, 4];
 
 export function ConsistencyHeatmap({ data }: { data: ConsistencyData }) {
+    const hasHistory = data.weeks.some((week) =>
+        week.some((level) => level !== null && level > 0),
+    );
     const ariaLabel = `${data.goodDays} of ${data.totalDays} days with at least 10 points over the last ${data.weeks.length} weeks`;
 
     return (
@@ -74,6 +77,12 @@ export function ConsistencyHeatmap({ data }: { data: ConsistencyData }) {
                     ))}
                 </div>
             </div>
+            {!hasHistory && (
+                <p role="status" className="mt-2 font-mono text-xs text-faint">
+                    <span className="text-accent">›</span> your first good day
+                    lights the first cell
+                </p>
+            )}
             <div className="mt-3 flex items-center justify-between gap-1.5 font-mono text-2xs text-muted">
                 <span>{data.goodPercent}% of days with ≥ 10 pts</span>
                 <span className="inline-flex items-center gap-[3px]">

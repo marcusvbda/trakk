@@ -18,6 +18,10 @@ function dueText(card: KanbanCardData, isDone: boolean): string {
         return 'completed';
     }
 
+    if (card.dueLabel === null) {
+        return 'no date';
+    }
+
     return `${card.isOverdue ? 'overdue' : 'due'} ${card.dueLabel}`;
 }
 

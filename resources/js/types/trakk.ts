@@ -40,7 +40,7 @@ export type LogKind =
     | 'reopened';
 
 export type LogEntry = {
-    id: string;
+    id: number;
     timeLabel: string;
     kind: LogKind;
     text: string;
@@ -48,9 +48,9 @@ export type LogEntry = {
 };
 
 export type KanbanCardData = {
-    id: string;
+    id: number;
     title: string;
-    dueLabel: string;
+    dueLabel: string | null;
     checklistDone: number;
     checklistTotal: number;
     isOverdue: boolean;

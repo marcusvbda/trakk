@@ -24,8 +24,8 @@ export function CommandBar() {
             <span className="font-mono text-[12px] text-accent">›</span>
             <input
                 ref={input}
-                aria-label="Command: log, search or ask AI"
-                placeholder="log, search or ask AI…"
+                aria-label="Search or run a command"
+                placeholder="search or run a command…"
                 className="h-[30px] min-w-0 flex-1 bg-transparent font-mono text-[11.5px] text-fg outline-none"
             />
             <span className="rounded-chip border border-line-strong px-[5px] py-px font-mono text-xs text-muted">

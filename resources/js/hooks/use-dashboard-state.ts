@@ -1,16 +1,45 @@
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import type { GoalFilter } from '@/components/trakk/goal-filter-tabs';
 import { formatMinutes, percentOf } from '@/lib/format';
 import { moveCardBetweenColumns, taskStatusLabel } from '@/lib/kanban';
+import { update as setReminderActive } from '@/routes/reminders/active';
+import {
+    destroy as undoCompletion,
+    store as completeTask,
+} from '@/routes/tasks/completions';
+import { update as moveTask } from '@/routes/tasks/status';
 import type {
     DashboardProps,
     GoalSummary,
-    Kpi,
     LogEntry,
+    ReminderItem,
     TaskStatus,
+    TodayAction,
 } from '@/types';
 
 const maxLogEntries = 8;
+
+const refreshAfterTaskChange = [
+    'kpis',
+    'actions',
+    'pointsToday',
+    'pointsChart',
+    'consistency',
+    'goalsSummary',
+    'goals',
+    'focusProject',
+    'log',
+    'status',
+    'overdue',
+    'suggestion',
+    'upcoming',
+    'hints',
+];
+
+const refreshAfterReminderToggle = ['reminders', 'log', 'status'];
+
+export type DashboardSheet = 'replan' | 'check-in';
 
 function matchesFilter(goal: GoalSummary, filter: GoalFilter): boolean {
     switch (filter) {
@@ -26,114 +55,140 @@ function matchesFilter(goal: GoalSummary, filter: GoalFilter): boolean {
     }
 }
 
-// Mock-phase interactions: the sums below move to the server in M3/M4.
-function withPointsToday(kpis: Kpi[], points: number, target: number): Kpi[] {
-    const isTargetHit = points >= target;
-    const percent = Math.min(100, Math.round(percentOf(points, target)));
+function withLogLine(
+    log: LogEntry[],
+    entry: Omit<LogEntry, 'id' | 'timeLabel'>,
+): LogEntry[] {
+    const created: LogEntry = {
+        ...entry,
+        id: -Date.now(),
+        timeLabel: formatMinutes(new Date()),
+    };
 
-    return kpis.map((kpi) =>
-        kpi.id === 'points-today'
-            ? {
-                  ...kpi,
-                  value: String(points),
-                  valueTone: isTargetHit ? 'accent' : 'default',
-                  progress: percent,
-                  sub: isTargetHit
-                      ? 'daily target hit'
-                      : `${percent}% of daily target`,
-                  subTone: isTargetHit ? 'accent' : 'muted',
-              }
-            : kpi,
-    );
+    return [created, ...log].slice(0, maxLogEntries);
 }
 
 export function useDashboardState(props: DashboardProps) {
-    const [actions, setActions] = useState(props.actions);
-    const [log, setLog] = useState(props.log);
-    const [reminders, setReminders] = useState(props.reminders);
-    const [columns, setColumns] = useState(props.focusProject.columns);
     const [filter, setFilter] = useState<GoalFilter>('all');
+    const [sheet, setSheet] = useState<DashboardSheet | null>(null);
 
-    function pushLog(entry: Omit<LogEntry, 'id' | 'timeLabel'>) {
-        const created: LogEntry = {
-            ...entry,
-            id: `local-${crypto.randomUUID()}`,
-            timeLabel: formatMinutes(new Date()),
-        };
-
-        setLog((entries) => [created, ...entries].slice(0, maxLogEntries));
-    }
-
-    function toggleAction(actionId: string) {
-        const action = actions.find((candidate) => candidate.id === actionId);
-
-        if (!action) {
-            return;
-        }
-
+    function toggleAction(action: TodayAction) {
         const wasDone = action.isDone;
+        const pointsToday =
+            props.pointsToday + (wasDone ? -action.points : action.points);
+        const options = { preserveScroll: true, only: refreshAfterTaskChange };
 
-        setActions((current) =>
-            current.map((candidate) =>
-                candidate.id === actionId
+        const visit = router.optimistic<DashboardProps>((current) => ({
+            actions: current.actions.map((candidate) =>
+                candidate.id === action.id
                     ? { ...candidate, isDone: !wasDone }
                     : candidate,
             ),
-        );
-        pushLog({
-            kind: wasDone ? 'undone' : 'done',
-            text: `${wasDone ? 'undone · ' : ''}${action.title.toLowerCase()} · ${action.goalName}`,
-            trailing: `${wasDone ? '−' : '+'}${action.points}`,
-        });
-    }
+            pointsToday,
+            kpis: current.kpis.map((kpi) =>
+                kpi.id === 'points-today'
+                    ? {
+                          ...kpi,
+                          value: String(pointsToday),
+                          progress: Math.min(
+                              100,
+                              Math.round(
+                                  percentOf(pointsToday, current.dailyTarget),
+                              ),
+                          ),
+                      }
+                    : kpi,
+            ),
+            log: withLogLine(current.log, {
+                kind: wasDone ? 'undone' : 'done',
+                text: wasDone
+                    ? `${action.title.toLowerCase()} unchecked · ${action.goalName}`
+                    : `${action.title.toLowerCase()} · ${action.goalName}`,
+                trailing: wasDone ? null : `+${action.points}`,
+            }),
+        }));
 
-    function toggleReminder(reminderId: string) {
-        const reminder = reminders.find(
-            (candidate) => candidate.id === reminderId,
-        );
+        if (wasDone) {
+            visit.delete(undoCompletion.url(action.id), options);
 
-        if (!reminder) {
             return;
         }
 
-        setReminders((current) =>
-            current.map((candidate) =>
-                candidate.id === reminderId
-                    ? { ...candidate, isActive: !candidate.isActive }
-                    : candidate,
-            ),
-        );
-        pushLog({
-            kind: reminder.isActive ? 'undone' : 'sent',
-            text: `reminder ${reminder.isActive ? 'paused' : 'enabled'} · ${reminder.label.toLowerCase()}`,
-            trailing: null,
-        });
+        visit.post(completeTask.url(action.id), {}, options);
     }
 
-    function moveCard(cardId: string, from: TaskStatus, to: TaskStatus) {
-        const card = columns
+    function toggleReminder(reminder: ReminderItem) {
+        const isActive = !reminder.isActive;
+
+        router
+            .optimistic<DashboardProps>((current) => ({
+                reminders: current.reminders.map((candidate) =>
+                    candidate.id === reminder.id
+                        ? { ...candidate, isActive }
+                        : candidate,
+                ),
+                log: withLogLine(current.log, {
+                    kind: isActive ? 'sent' : 'undone',
+                    text: `${reminder.label.toLowerCase()} ${isActive ? 'enabled' : 'paused'}`,
+                    trailing: null,
+                }),
+            }))
+            .patch(
+                setReminderActive.url(reminder.id),
+                { is_active: isActive },
+                { preserveScroll: true, only: refreshAfterReminderToggle },
+            );
+    }
+
+    function moveCard(cardId: number, from: TaskStatus, to: TaskStatus) {
+        const card = props.focusProject?.columns
             .find((column) => column.status === from)
             ?.cards.find((candidate) => candidate.id === cardId);
 
-        if (!card) {
+        if (!card || !props.focusProject) {
             return;
         }
 
-        setColumns((current) =>
-            moveCardBetweenColumns(current, cardId, from, to),
-        );
-        pushLog({
-            kind: to === 'done' ? 'done' : 'sent',
-            text: `${card.title.toLowerCase()} → ${taskStatusLabel[to]}`,
-            trailing: null,
-        });
+        const doneCount =
+            props.focusProject.doneCount +
+            (to === 'done' ? 1 : 0) -
+            (from === 'done' ? 1 : 0);
+
+        router
+            .optimistic<DashboardProps>((current) =>
+                current.focusProject
+                    ? {
+                          focusProject: {
+                              ...current.focusProject,
+                              doneCount,
+                              percent: Math.round(
+                                  percentOf(
+                                      doneCount,
+                                      current.focusProject.totalCount,
+                                  ),
+                              ),
+                              columns: moveCardBetweenColumns(
+                                  current.focusProject.columns,
+                                  cardId,
+                                  from,
+                                  to,
+                              ),
+                          },
+                          log: withLogLine(current.log, {
+                              kind: to === 'done' ? 'done' : 'sent',
+                              text: `${card.title.toLowerCase()} → ${taskStatusLabel[to]}`,
+                              trailing: null,
+                          }),
+                      }
+                    : {},
+            )
+            .patch(
+                moveTask.url(cardId),
+                { status: to },
+                { preserveScroll: true, only: refreshAfterTaskChange },
+            );
     }
 
-    const pointsToday = actions.reduce(
-        (sum, action) => sum + (action.isDone ? action.points : 0),
-        0,
-    );
-    const doneCount = actions.filter((action) => action.isDone).length;
     const visibleGoals = props.goals.filter((goal) =>
         matchesFilter(goal, filter),
     );
@@ -145,28 +200,17 @@ export function useDashboardState(props: DashboardProps) {
             .length,
         off: props.goals.filter((goal) => matchesFilter(goal, 'off')).length,
     };
-    const doneColumn = columns.find((column) => column.status === 'done');
-    const focusDoneCount =
-        (doneColumn?.cards.length ?? 0) + (doneColumn?.hiddenCount ?? 0);
 
     return {
-        actions,
-        doneCount,
-        pointsToday,
-        kpis: withPointsToday(props.kpis, pointsToday, props.dailyTarget),
-        log,
-        reminders,
-        activeReminders: reminders.filter((reminder) => reminder.isActive)
-            .length,
-        columns,
-        focusDoneCount,
-        focusPercent: Math.round(
-            (focusDoneCount / props.focusProject.totalCount) * 100,
-        ),
         filter,
         setFilter,
+        sheet,
+        setSheet,
         visibleGoals,
         goalFilterCounts,
+        doneCount: props.actions.filter((action) => action.isDone).length,
+        activeReminders: props.reminders.filter((reminder) => reminder.isActive)
+            .length,
         toggleAction,
         toggleReminder,
         moveCard,

@@ -8,7 +8,7 @@ export const taskStatusLabel: Record<TaskStatus, string> = {
 
 export function moveCardBetweenColumns(
     columns: KanbanColumnData[],
-    cardId: string,
+    cardId: number,
     from: TaskStatus,
     to: TaskStatus,
 ): KanbanColumnData[] {

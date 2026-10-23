@@ -36,6 +36,7 @@ function Stat({
 
 export function PointsChart({ chart }: { chart: PointsChartData }) {
     const targetOffset = (chart.target / chart.scaleMax) * chartHeight;
+    const hasPoints = chart.days.some((day) => day.points > 0);
     const ariaLabel = `Points per day over the last ${chart.days.length} days. Average ${chart.average}, best day ${chart.bestDay}, ${chart.daysAtTarget} days hit the target of ${chart.target}.`;
 
     return (
@@ -97,14 +98,22 @@ export function PointsChart({ chart }: { chart: PointsChartData }) {
                 <span>{chart.middleLabel}</span>
                 <span className="text-accent">today</span>
             </div>
+            {!hasPoints && (
+                <p role="status" className="mt-2 font-mono text-xs text-faint">
+                    <span className="text-accent">›</span> no points yet · check
+                    an action to start
+                </p>
+            )}
             <div className="mt-3 grid grid-cols-3 gap-2.5 border-t border-divider pt-2.5">
-                <Stat label="average">{chart.average}</Stat>
-                <Stat label="best day">{chart.bestDay}</Stat>
+                <Stat label="average">{hasPoints ? chart.average : '—'}</Stat>
+                <Stat label="best day">{hasPoints ? chart.bestDay : '—'}</Stat>
                 <Stat label="days ≥ target">
-                    {chart.daysAtTarget}
-                    <span className="text-[11px] text-faint">
-                        /{chart.days.length}
-                    </span>
+                    {hasPoints ? chart.daysAtTarget : '—'}
+                    {hasPoints && (
+                        <span className="text-[11px] text-faint">
+                            /{chart.days.length}
+                        </span>
+                    )}
                 </Stat>
             </div>
         </Panel>
