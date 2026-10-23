@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +28,16 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerDevProcesses();
+    }
+
+    private function registerDevProcesses(): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        DevCommands::artisan('schedule:work', 'scheduler');
     }
 
     /**

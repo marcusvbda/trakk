@@ -11,14 +11,14 @@
 | Auth | Laravel Fortify (starter kit), login and logout only. Passport added later for MCP OAuth. |
 | Database | PostgreSQL 17 |
 | Queue / cache / sessions | `database` driver (no Redis in the MVP) |
-| Scheduler | Laravel scheduler (`routes/console.php`), one cron entry on the server |
+| Scheduler | Laravel scheduler (`routes/console.php`). Locally `schedule:work` runs inside `composer run dev`; in production a `scheduler` container runs `schedule:work` |
 | MCP | `laravel/mcp` (official) |
 | Notifications | Telegram Bot API via Laravel HTTP client; mail as fallback |
 | Tests | Pest 4 |
 | Quality | Pint (format), Larastan (static analysis), ESLint + Prettier (starter kit) |
 | AI tooling | Laravel Boost (dev only): guidelines, skills and the Boost MCP for coding agents |
-| Local dev | Native PHP + Postgres, `composer run dev` |
-| Deploy | Own VPS, Docker Compose (see `docs/DEPLOY.md`) |
+| Local dev | Native PHP + Postgres. `composer run dev` starts everything else: server, queue worker, scheduler, logs, Vite. Extra processes are registered with `DevCommands::artisan()` in `AppServiceProvider` |
+| Deploy | Own VPS, Docker Compose, app served by FrankenPHP in classic mode, no Octane (see `docs/DEPLOY.md`) |
 
 ## Request flow
 

@@ -18,23 +18,37 @@ Everything in this repository is written in English: code, UI copy, comments, co
 
 Laravel 13 · PHP 8.4 · PostgreSQL 17 · Inertia 3 + React 19 + TypeScript · Tailwind CSS 4 · Wayfinder · Fortify · `laravel/mcp` · Pest 4 · Pint · Larastan · Laravel Boost (dev).
 
-Local development runs natively (no Docker). Docker is only for the VPS deploy.
+Local development runs natively (no Docker). Docker is only for the VPS deploy, where the app is served by FrankenPHP (see `docs/DEPLOY.md`).
 
 ## Commands
 
 ```bash
-composer run dev                 # server, queue, logs and Vite together
+composer run dev                 # EVERYTHING the app needs locally: server, queue worker, scheduler, logs and Vite
 php artisan test --compact       # all tests (Pest)
 php artisan test --filter=Pace   # focused run
 vendor/bin/pint --dirty          # format changed PHP files
 vendor/bin/phpstan analyse       # static analysis
 npm run types                    # TypeScript check (tsc --noEmit)
-npm run lint && npm run format   # ESLint + Prettier
+npm run check                    # lint + format check (Vite+); `npm run check:fix` to fix
+npx vp check --fix resources/js  # scoped fix; never run it repo-wide, it reformats docs and prototypes
 php artisan migrate:fresh --seed # reset local DB with demo data that mirrors the prototype
 php artisan mcp:inspector trakk  # inspect the local MCP server
 ```
 
 If a script above does not exist yet, add it to `composer.json` / `package.json` as part of the milestone that needs it.
+
+## One command to run everything
+
+- `composer run dev` is the only command needed to use the app locally. Never ask the owner to start a second terminal.
+- Every process the app needs (queue worker, scheduler, a Telegram poller, anything added later) is registered with `DevCommands::artisan(...)` in `AppServiceProvider::registerDevProcesses()`. Add it there in the same change that introduces the need.
+- External services (PostgreSQL) are the only things started outside `composer run dev`; `composer run setup` prepares a fresh clone.
+
+## Production target: FrankenPHP
+
+- Production serves the app with FrankenPHP (Caddy built in) in **classic mode**: one fresh PHP request per hit, like PHP-FPM. Laravel Octane is not installed, so no worker-mode state rules apply. Do not add Octane without asking.
+- Write code that does not depend on the web server: no `$_SERVER` server-name checks, no nginx/Apache rewrites, no PHP-FPM-only functions (`fastcgi_finish_request`). Trust the framework (`Request`, `url()`, `asset()`).
+- The document root is `public/`. HTTPS, compression and static assets are handled by FrankenPHP, so the app needs no proxy configuration.
+- Queue worker and scheduler run as separate containers of the same image in production (`docs/DEPLOY.md`), mirroring the processes in `composer run dev`.
 
 ## Architecture in one screen
 

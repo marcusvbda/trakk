@@ -21,5 +21,5 @@ Requires PHP 8.4, Composer, Node 22+, PostgreSQL 17.
 composer install && npm install
 cp .env.example .env && php artisan key:generate
 php artisan migrate --seed
-composer run dev
+composer run dev   # server, queue worker, scheduler, logs and Vite: everything the app needs
 ```
