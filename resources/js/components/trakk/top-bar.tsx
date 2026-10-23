@@ -1,13 +1,16 @@
-import { CommandBar } from '@/components/trakk/command-bar';
-import { LiveDot } from '@/components/trakk/live-dot';
 import { LogoMark } from '@/components/trakk/logo-mark';
 import { Chip } from '@/components/ui/chip';
-import { TrakkButton } from '@/components/ui/trakk-button';
 import { useClock } from '@/hooks/use-clock';
 import { formatClock } from '@/lib/format';
 import type { TopBarData } from '@/types';
 
-export function TopBar({ data }: { data: TopBarData }) {
+export function TopBar({
+    data,
+    onSlotChange,
+}: {
+    data: TopBarData;
+    onSlotChange: (slot: HTMLElement | null) => void;
+}) {
     const now = useClock();
 
     return (
@@ -37,15 +40,7 @@ export function TopBar({ data }: { data: TopBarData }) {
                     <span>{data.yearProgress}% of year</span>
                 </span>
             </div>
-            <CommandBar />
-            <div className="ml-auto flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-1.5 font-mono text-sm text-muted">
-                    <LiveDot />
-                    mcp connected
-                </span>
-                <TrakkButton>+ goal</TrakkButton>
-                <TrakkButton variant="accent">check-in</TrakkButton>
-            </div>
+            <div ref={onSlotChange} className="contents" />
         </header>
     );
 }

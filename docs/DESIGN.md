@@ -157,6 +157,7 @@ Lowercase is the default voice for mono metadata ("due 24 oct", "on pace +2%"). 
 ## Layout
 
 - Page: `bg-canvas`, optional `scanlines` overlay, content `px-5`, vertical gap 14px between rows, 28px bottom padding. **The page container has no max-width: content always fills the full viewport width (owner decision). Never add `max-w-*` to the page container or `main`, even though the prototypes cap it at 1440px; this is a deliberate deviation from them.**
+- **Top bar on every authenticated Trakk page (owner decision).** `TrakkLayout` always renders the top bar: logo mark + `~/trakk` + `v0.1` chip, date label, live clock and year progress. Never build a page-local copy and never omit it on a new page. The date label and year progress come from the shared Inertia prop `topBar` (`HandleInertiaRequests`), not from page props. Page-specific controls (command bar, `+ goal`, `check-in`, `synced`, `edit`, `+ task`) are injected into the bar's right side with `<TopBarSlot>` (a portal), so the bar stays one row. The sign-in screen is the only exception: it has its own auth bar (see Sign in).
 - Rows are flex containers with `flex-wrap` and `gap-3.5` (14px). Each panel has `flex: <grow> 1 <basis>` and `min-w-0`, so the layout stacks on mobile without breakpoints.
 - Grids: KPI strip `grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5`; goal cards `grid-cols-[repeat(auto-fill,minmax(min(100%,380px),1fr))] gap-2.5`.
 - Panel: `bg-surface border border-line rounded-panel`, padding `12px 14px` (lists use `12px 10px 10px` so row hover reaches the edge). The heading row has `pb-2.5 mb-1 border-b border-divider`.
@@ -176,7 +177,7 @@ Lowercase is the default voice for mono metadata ("due 24 oct", "on pace +2%"). 
 
 ### Goal detail (`/goals/{goal}`)
 
-Breadcrumb bar (`← dashboard / goals / nomad-visa`, synced dot, `edit`, `+ task`) · title row (color square, title, type chip, priority chip, pace status) · facts grid (`dl`, 1px gaps over `divider`) · row: Objective (1) · Pace chart (1.6) · Progress (0.8) · full-width Board (3 columns, horizontal scroll under 640px) · row: Reminders for this goal · History.
+Top bar (with `synced` dot, `edit`, `+ task` in its slot) · breadcrumb row (`← dashboard / goals / nomad-visa`) · title row (color square, title, type chip, priority chip, pace status) · facts grid (`dl`, 1px gaps over `divider`) · row: Objective (1) · Pace chart (1.6) · Progress (0.8) · full-width Board (3 columns, horizontal scroll under 640px) · row: Reminders for this goal · History.
 
 ### Sign in (`/login`)
 

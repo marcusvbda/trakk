@@ -17,6 +17,7 @@ paths:
 
 ## Structure
 
+- Every authenticated Trakk page gets the top bar (logo, `~/trakk`, version, date, live clock, year progress) from `TrakkLayout`; pages never render their own copy. Page controls go into it with `<TopBarSlot>`. The data is the shared Inertia prop `topBar`, not a per-page prop.
 - Pages in `resources/js/pages/` (lowercase, kebab-case files, matching `Inertia::render` names).
 - Domain components in `resources/js/components/trakk/`, primitives in `resources/js/components/ui/`, one component per file, kebab-case file names, PascalCase exports.
 - Types for every page prop in `resources/js/types/`, mirroring the Laravel Resources.

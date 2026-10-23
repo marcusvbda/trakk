@@ -12,7 +12,8 @@ import { PointsChart } from '@/components/trakk/points-chart';
 import { ReminderRow } from '@/components/trakk/reminder-row';
 import { StatusFooter } from '@/components/trakk/status-footer';
 import { TimelineItem } from '@/components/trakk/timeline-item';
-import { TopBar } from '@/components/trakk/top-bar';
+import { CommandBar } from '@/components/trakk/command-bar';
+import { TopBarSlot } from '@/components/trakk/top-bar-slot';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -37,7 +38,17 @@ export default function Dashboard(props: DashboardProps) {
 
             <h1 className="sr-only">Dashboard</h1>
 
-            <TopBar data={props.topBar} />
+            <TopBarSlot>
+                <CommandBar />
+                <div className="ml-auto flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-1.5 font-mono text-sm text-muted">
+                        <LiveDot />
+                        mcp connected
+                    </span>
+                    <TrakkButton>+ goal</TrakkButton>
+                    <TrakkButton variant="accent">check-in</TrakkButton>
+                </div>
+            </TopBarSlot>
 
             <section
                 aria-label="Indicators"

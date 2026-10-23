@@ -131,7 +131,6 @@ export type StatusLine = {
 };
 
 export type DashboardProps = {
-    topBar: TopBarData;
     dailyTarget: number;
     kpis: Kpi[];
     actions: TodayAction[];

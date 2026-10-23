@@ -17,10 +17,6 @@ final class DashboardMock
     public static function props(): array
     {
         return [
-            'topBar' => [
-                'dateLabel' => 'fri, 23 oct 2026 · wk 43 · day 295/365',
-                'yearProgress' => 81,
-            ],
             'dailyTarget' => self::DAILY_TARGET,
             'kpis' => self::kpis(),
             'actions' => self::actions(),

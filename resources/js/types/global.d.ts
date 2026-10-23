@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { TopBarData } from '@/types/dashboard';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -11,6 +12,7 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            topBar: TopBarData | null;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };
