@@ -95,10 +95,11 @@ The approved design must be reproduced exactly. Use the tokens from `docs/DESIGN
 
 - Work in vertical slices: migration → model → service + unit test → request/controller/route + feature test → page/components. Follow the `trakk-feature` skill (`.ai/skills/trakk-feature/SKILL.md`).
 - For UI work follow the `trakk-ui` skill (`.ai/skills/trakk-ui/SKILL.md`).
-- After a slice, ask the `reviewer` subagent to check the diff before committing.
+- After a slice, ask the `reviewer` subagent to check the diff before it is committed.
 - Ask before: installing dependencies, changing the data model in `docs/ARCHITECTURE.md`, changing design tokens, deleting files, pushing to git.
 - Never read or print `.env` secrets.
-- Commits: small, imperative, Conventional Commits (`feat: add pace calculation for habit goals`).
+- **Never commit unless the owner explicitly asks** ("commit", "pode commitar"). Do not ask whether to commit either: finish the work, leave it uncommitted in the working tree, and say so. One request to commit covers only that moment, not later changes. Never push.
+- When asked to commit: small, imperative, Conventional Commits (`feat: add pace calculation for habit goals`). Stage only the files of that change.
 
 ## Agent setup
 
