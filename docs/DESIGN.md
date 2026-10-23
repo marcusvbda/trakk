@@ -240,6 +240,10 @@ Icons: inline stroke SVG or `lucide-react` at 14px with `strokeWidth={1.25}`. Ne
 - Live clock ticks every second in the top bar only.
 - `prefers-reduced-motion: reduce` disables all animation and transitions.
 
+## Cursor
+
+Everything clickable shows `cursor: pointer` (owner decision): buttons, links, menu items, toggles, rows that are buttons, `summary`, selects. It is set once in the base layer of `resources/css/app.css` (Tailwind's preflight resets buttons to the default arrow), so new components get it for free; disabled controls keep the default cursor. Never remove that rule, and give any non-semantic clickable element `role="button"` (or `cursor-pointer`) so it matches.
+
 ## Accessibility
 
 - Real `<button>`, `<a>`, `<input>` + `<label>`; `aria-pressed` on toggles and checkable rows; `aria-label` on icon-only buttons (`Move "Sworn translation" to done`).
