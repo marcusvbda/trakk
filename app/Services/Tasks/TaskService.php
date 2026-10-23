@@ -222,8 +222,8 @@ final class TaskService
             throw new InvalidArgumentException('Points must be between 1 and 5.');
         }
 
-        if ($goal->isProject() && $data->daysOfWeek !== null) {
-            throw new InvalidArgumentException('Project tasks are one-off and take no weekdays.');
+        if ($goal->isProject() && ($data->daysOfWeek !== null || $data->scheduledTime !== null)) {
+            throw new InvalidArgumentException('Project tasks are one-off and take no weekdays or time.');
         }
 
         if ($data->daysOfWeek === []) {

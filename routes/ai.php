@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Mcp\Servers\TrakkServer;
 use Laravel\Mcp\Facades\Mcp;
 
-// Mcp::web('/mcp/demo', \App\Mcp\Servers\PublicServer::class);
+Mcp::local('trakk', TrakkServer::class);

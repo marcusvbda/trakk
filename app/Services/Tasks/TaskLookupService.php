@@ -76,7 +76,8 @@ final class TaskLookupService
         return $tasks->filter(function (Task $task) use ($needle): bool {
             $title = $this->normalise($task->title);
 
-            return str_contains($title, $needle) || str_contains($needle, $title);
+            // A title with no letters or digits normalises to '' and would be "contained" in every query.
+            return $title !== '' && (str_contains($title, $needle) || str_contains($needle, $title));
         })->values();
     }
 

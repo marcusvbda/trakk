@@ -156,15 +156,28 @@ Take the active goal with the lowest delta that has overdue tasks. `n` = its ove
 - Activities carry a `source`: `web`, `mcp` or `system`. Activities from MCP end their text with ` · claude`.
 - The log survives deleting a goal or task.
 
-## MCP tools (first version)
+## MCP tools
 
 | Tool | Kind | Purpose |
 | --- | --- | --- |
 | `get-today` | read-only | Today's actions, points vs target, overdue, due soon. |
 | `list-goals` | read-only | Active goals with progress, expected and pace. |
 | `complete-task` | write, idempotent | Mark a task done for today, by id or by fuzzy title. Returns new day score. |
+| `uncomplete-task` | write, idempotent | Undo today's completion (a mistake). |
 | `create-task` | write | Add a task to a goal (title, points, due date or recurrence). |
 | `move-task` | write, idempotent | Change a project task's status. |
 | `create-goal` | write | Create a goal with all fields. |
+| `replan-tasks` | write, idempotent | Push open one-off tasks (usually overdue) to today, tomorrow, next Monday or a date. |
 
 Tools call the same services as the web app. They never duplicate rules.
+
+### Finding a task by title
+
+- An id always wins. Otherwise the title is normalised (lowercase, ASCII, letters and digits only) and matched in this order: exact, then contained (either text contains the other), then the closest title among today's actions with similarity ≥ 0.6.
+- Several matches: the only one on today's list wins; otherwise the tool answers with the candidates' ids and asks which one. A closest-title guess within 0.05 of the runner-up is also ambiguous.
+- A title with no letters or digits never matches.
+
+### Reminders and scans
+
+- A reminder is sent when the current minute is its slot or up to 10 minutes after it; a slot that failed is not retried.
+- `goals:scan-deadlines` logs a `deadline_near` warning at 14 and at 3 days left, once per goal and day count. `tasks:scan-overdue` logs `task_overdue` once per task and due date. Both run hourly and are idempotent, so the first run after the owner's midnight is the one that logs.

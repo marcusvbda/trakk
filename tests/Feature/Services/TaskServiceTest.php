@@ -60,6 +60,7 @@ describe('create', function () {
         $this->service->create($goal, $data);
     })->throws(InvalidArgumentException::class)->with([
         'weekdays on a project' => ['project', new TaskData('A', 1, daysOfWeek: [1])],
+        'time on a project' => ['project', new TaskData('A', 1, scheduledTime: '09:00')],
         'empty weekdays' => ['habit', new TaskData('A', 1, daysOfWeek: [])],
         'habit task with neither weekdays nor a due date' => ['habit', new TaskData('A', 1)],
         'weekday out of range' => ['habit', new TaskData('A', 1, daysOfWeek: [8])],

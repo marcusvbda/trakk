@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Dashboard;
 
 use App\Enums\ActivitySource;
+use App\Mcp\Servers\TrakkServer;
 use App\Models\User;
 use App\Support\Clock;
 
@@ -16,7 +17,7 @@ final class McpStatusService
 
     public function toolCount(): int
     {
-        return (int) config('trakk.mcp_tools');
+        return count(TrakkServer::TOOLS);
     }
 
     /** Whether Claude logged anything through MCP in the last 24 hours. */

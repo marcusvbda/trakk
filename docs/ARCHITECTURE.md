@@ -123,7 +123,7 @@ Write routes of S3 (all behind `auth`; models by policy, goals by the scoped bin
 
 Dashboard write routes (`routes/web.php`, all behind `auth` and the model policies): `POST /tasks/{task}/completions`, `DELETE /tasks/{task}/completions/today`, `PATCH /tasks/{task}/status`, `PATCH /reminders/{reminder}/active`, `POST /replan`, `POST /check-in`.
 
-Config read by the dashboard: `trakk.mcp_tools` (tool count shown in the top bar and footer; replaced by the real count of `TrakkServer` tools in S4) and `services.telegram.bot_token`.
+The tool count in the top bar and footer is `count(TrakkServer::TOOLS)`; the dashboard also reads `services.telegram.bot_token`.
 
 ## Time
 

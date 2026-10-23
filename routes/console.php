@@ -8,9 +8,9 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('reminders:dispatch')->everyMinute()->withoutOverlapping();
+Schedule::command('reminders:dispatch')->everyMinute()->withoutOverlapping(5);
 
 // Hourly and idempotent instead of "daily at 00:05": the owner's timezone lives in the database, and the scheduler
 // runs in UTC, so each scan logs a warning in the first hour after the owner's midnight and never twice.
-Schedule::command('tasks:scan-overdue')->hourly()->withoutOverlapping();
-Schedule::command('goals:scan-deadlines')->hourly()->withoutOverlapping();
+Schedule::command('tasks:scan-overdue')->hourly()->withoutOverlapping(30);
+Schedule::command('goals:scan-deadlines')->hourly()->withoutOverlapping(30);

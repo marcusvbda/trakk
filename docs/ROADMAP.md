@@ -62,17 +62,6 @@ cd trakk
 - [x] Check/uncheck today's actions (optimistic) with feature tests
 - [x] Goal filter tabs
 
-## M3a — Mocked screens
-
-Login, dashboard and goal detail were first built against PHP mocks. M3 replaced the dashboard and top bar mocks with `DashboardService` and `TopBarService`; `GoalDetailService` (M4) replaced `GoalDetailMock` and the local sums in `use-goal-board-state.ts`.
-
-- [x] `AuthLayout`, `LogoMark`, `TextField` and the sign-in screen (real Fortify login, error and throttle states)
-- [x] UI primitives (`Panel`, `PanelHeader`, `Chip`, `ProgressBar`, `TrakkButton`, `TrakkCheckbox`, `TrakkToggle`) and `TrakkLayout`
-- [x] Dashboard (`/`) with all panels, goal filters, local check / kanban move / reminder toggles
-- [x] Goal detail (`/goals/{goal}`) with pace chart, board moves and history
-- [x] Typed props in `resources/js/types/`
-- [x] Feature tests (guest redirect, owner renders the right component) and `tests/Browser/ScreensTest.php` screenshots at 1440px and 390px
-
 ## M4 — Goals and boards
 
 - [x] Create / edit goal form (all fields from PRODUCT.md, color picker limited to the goal palette), status and delete, and the `/goals` list
@@ -85,10 +74,10 @@ Login, dashboard and goal detail were first built against PHP mocks. M3 replaced
 ## M5 — Reminders and MCP (local)
 
 - [x] Reminders CRUD and toggle
-- [ ] `TelegramClient`, `SendReminder` job, `reminders:dispatch` every minute, daily overdue scan
-- [ ] Message templates for each reminder kind
-- [ ] `TrakkServer` with `get-today`, `list-goals`, `complete-task`, `create-task`, `move-task`, `create-goal`, tests for each
-- [ ] `Mcp::local('trakk', ...)` registered in Claude Code (`claude mcp add -s project trakk -- php artisan mcp:start trakk`)
+- [x] `TelegramClient`, `SendReminder` job, `reminders:dispatch` every minute, daily overdue scan
+- [x] Message templates for each reminder kind
+- [x] `TrakkServer` with `get-today`, `list-goals`, `complete-task`, `uncomplete-task`, `create-task`, `move-task`, `create-goal`, `replan-tasks`, tests for each
+- [x] `Mcp::local('trakk', ...)` registered in Claude Code (`claude mcp add -s project trakk -- php artisan mcp:start trakk`)
 
 ## M6 — Deploy and remote MCP
 

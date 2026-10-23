@@ -6,8 +6,6 @@ return [
 
     'version' => env('APP_VERSION', '0.1'),
 
-    'mcp_tools' => 5,
-
     'owner' => [
         'email' => env('OWNER_EMAIL'),
         'password' => env('OWNER_PASSWORD'),
