@@ -55,3 +55,15 @@ it('shows the goal detail on {name}', function (string $name, int $width, int $h
         ->assertSee('9/20')
         ->screenshot(filename: "goal-{$name}");
 })->with('viewports');
+
+it('signs out from the user menu in the top bar', function () {
+    $page = signIn(1440, 900)
+        ->click('button[aria-haspopup="menu"]')
+        ->wait(0.5)
+        ->assertSee('log out')
+        ->screenshot(filename: 'user-menu');
+
+    $page->click('[data-test="logout-button"]')
+        ->wait(1)
+        ->assertPathIs('/login');
+});

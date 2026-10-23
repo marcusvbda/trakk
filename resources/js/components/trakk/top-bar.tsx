@@ -1,4 +1,5 @@
 import { LogoMark } from '@/components/trakk/logo-mark';
+import { UserMenu } from '@/components/trakk/user-menu';
 import { Chip } from '@/components/ui/chip';
 import { useClock } from '@/hooks/use-clock';
 import { formatClock } from '@/lib/format';
@@ -41,6 +42,7 @@ export function TopBar({
                 </span>
             </div>
             <div ref={onSlotChange} className="contents" />
+            <UserMenu />
         </header>
     );
 }

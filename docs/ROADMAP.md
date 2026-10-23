@@ -2,6 +2,8 @@
 
 Tick boxes as work lands. Each milestone ends usable. Order matters: every milestone builds on real data from the previous one.
 
+M1–M5 are executed from `docs/specs/real-features.md` (sessions S1–S4). That spec lists every feature, route, rule and UI surface; tick the boxes here as each session lands.
+
 ## M0 — Project setup
 
 `laravel new` needs an empty folder and this repository already has files, so the app is created next to it and merged in without overwriting the docs.
