@@ -1,6 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { truncate } from '@/lib/format';
+import { firstName, truncate } from '@/lib/format';
 import { logout } from '@/routes';
 
 const userNameLimit = 10;
@@ -19,7 +19,9 @@ export function UserMenu() {
                 aria-label={`Account menu for ${auth.user.name}`}
                 className="inline-flex h-[34px] items-center gap-2 rounded-button border border-line-strong px-2.5 font-mono text-[11px] text-fg-2 transition-colors hover:border-muted hover:text-fg data-[state=open]:border-muted data-[state=open]:text-fg [div:empty+&]:ml-auto"
             >
-                <span>{truncate(auth.user.name, userNameLimit)}</span>
+                <span>
+                    {truncate(firstName(auth.user.name), userNameLimit)}
+                </span>
                 <span aria-hidden="true" className="text-xs text-muted">
                     ▾
                 </span>

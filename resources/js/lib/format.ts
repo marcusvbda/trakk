@@ -17,6 +17,10 @@ export function formatPace({ status, delta }: Pace): string {
     return `${paceLabel[status]} ${signed}%`;
 }
 
+export function firstName(fullName: string): string {
+    return fullName.trim().split(/\s+/u)[0] ?? '';
+}
+
 export function truncate(text: string, limit: number): string {
     return text.length > limit ? `${text.slice(0, limit)}...` : text;
 }
