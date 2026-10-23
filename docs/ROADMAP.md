@@ -1,0 +1,94 @@
+# Trakk — Roadmap
+
+Tick boxes as work lands. Each milestone ends usable. Order matters: every milestone builds on real data from the previous one.
+
+## M0 — Project setup
+
+`laravel new` needs an empty folder and this repository already has files, so the app is created next to it and merged in without overwriting the docs.
+
+```bash
+cd ~/Projects
+laravel new trakk-app
+#   starter kit: React · auth: Laravel's built-in (Fortify) · testing: Pest · database: PostgreSQL
+#   install Laravel Boost: yes (Claude Code) · run npm install: yes
+rsync -a --ignore-existing trakk-app/ trakk/   # keeps README.md, CLAUDE.md, docs/, .ai/, .claude/
+rm -rf trakk-app
+cd trakk
+```
+
+- [ ] App created and merged (`rsync --ignore-existing`, then delete `trakk-app`)
+- [ ] `.env`: `DB_CONNECTION=pgsql`, `DB_DATABASE=trakk`, `APP_TIMEZONE=UTC`; databases `trakk` and `trakk_test` created (`createdb trakk && createdb trakk_test`)
+- [ ] `phpunit.xml`: tests use pgsql `trakk_test`
+- [ ] `composer require laravel/mcp` and `php artisan vendor:publish --tag=ai-routes`
+- [ ] `composer require --dev larastan/larastan`, `phpstan.neon` at level 6 over `app/`
+- [ ] `php artisan boost:install` (Claude Code: guidelines, skills, MCP). Confirm `CLAUDE.md` keeps the project section above the Boost block
+- [ ] `ln -s ../.ai/rules .claude/rules` (if not present) so Claude Code auto-loads path-scoped rules
+- [ ] Composer scripts: `test`, `lint` (`pint`), `analyse` (`phpstan`); npm script `types` (`tsc --noEmit`) if missing
+- [ ] Fonts: `npm i @fontsource-variable/inter @fontsource/jetbrains-mono`, imported in `app.tsx`
+- [ ] Design tokens from `docs/DESIGN.md` pasted into `resources/css/app.css`; app forced to dark
+- [ ] `Date::use(CarbonImmutable::class)`, `Model::preventLazyLoading()`, `Model::shouldBeStrict()` (non-prod) in `AppServiceProvider`
+- [ ] Auth reduced to login + logout: in `config/fortify.php` keep no features (remove registration, reset passwords, email verification, two-factor); delete the starter-kit pages, routes and tests for those flows
+- [ ] Owner account created by `DatabaseSeeder` from `.env` (`OWNER_EMAIL`, `OWNER_PASSWORD`)
+- [ ] Sign-in page rebuilt with `AuthLayout`, `LogoMark`, `TextField` to match `docs/design/reference/login-*.png`; feature tests: logs in, rejects wrong password, throttles
+- [ ] First commit: `chore: scaffold Laravel 13 React starter kit`
+
+## M1 — Domain and data
+
+- [ ] Enums: `GoalType`, `GoalStatus`, `Priority`, `TaskStatus`, `PaceStatus`, `ReminderKind`, `ReminderChannel`, `ActivityType`
+- [ ] Migrations + models + factories (with states) for goals, tasks, checklist_items, completions, reminders, activities; user columns `timezone`, `daily_points_target`, `telegram_chat_id`
+- [ ] Policies for ownership
+- [ ] `DemoSeeder` mirroring the prototype data
+
+## M2 — Rules (services + unit tests)
+
+- [ ] `Clock` (today in the user's timezone)
+- [ ] `GoalProgressService`: progress (habit/project), expected, delta, pace status, projection, current/required pace
+- [ ] `ScoreService`: day score, week score vs last week, 30-day series
+- [ ] `StreakService`: current streak and record
+- [ ] `ConsistencyService`: 12-week heat levels
+- [ ] `CompletionService`: complete / undo (idempotent per day)
+- [ ] `TaskService`: create, update, move between statuses (creates/deletes completion on done)
+- [ ] `GoalService`: create, update, change status
+- [ ] `ActivityLogger`
+
+## M3 — Dashboard (first usable day)
+
+- [ ] `TrakkLayout`: top bar with live clock, year progress, command bar shell, `+ goal`, `check-in`
+- [ ] UI primitives and Trakk components from DESIGN.md
+- [ ] `DashboardService` read model (fixed query count)
+- [ ] Dashboard page identical to `docs/design/reference/dashboard-desktop.png` and `dashboard-mobile.png`
+- [ ] Check/uncheck today's actions (optimistic) with feature tests
+- [ ] Goal filter tabs
+
+## M4 — Goals and boards
+
+- [ ] Create / edit goal form (all fields from PRODUCT.md, color picker limited to the goal palette)
+- [ ] Goal detail page identical to `docs/design/reference/goal-desktop.png` and `goal-mobile.png`
+- [ ] Tasks: create, edit, delete, recurrence, points, due date, tag
+- [ ] Kanban moves (advance / reopen) with feature tests
+- [ ] Checklist items
+- [ ] Focus project on the dashboard (most behind active project)
+
+## M5 — Reminders and MCP (local)
+
+- [ ] Reminders CRUD and toggle
+- [ ] `TelegramClient`, `SendReminder` job, `reminders:dispatch` every minute, daily overdue scan
+- [ ] Message templates for each reminder kind
+- [ ] `TrakkServer` with `get-today`, `list-goals`, `complete-task`, `create-task`, `move-task`, `create-goal`, tests for each
+- [ ] `Mcp::local('trakk', ...)` registered in Claude Code (`claude mcp add -s project trakk -- php artisan mcp:start trakk`)
+
+## M6 — Deploy and remote MCP
+
+- [ ] Dockerfiles + `compose.yaml` + Caddyfile per `docs/DEPLOY.md`
+- [ ] VPS deploy with HTTPS on a subdomain, scheduler and queue worker running
+- [ ] GitHub Action: test on push, deploy on `main`
+- [ ] Passport + `Mcp::oauthRoutes()` + `Mcp::web('/mcp', ...)`; connected as a custom connector in Claude (web and mobile)
+- [ ] PWA manifest and icons
+- [ ] Daily Postgres backup
+
+## Later
+
+- Mobile "Today" screen designed for the phone
+- Command bar actions (⌘K: log, search, ask)
+- Inbound Telegram commands (check in by replying)
+- Weekly review page

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Trakk prototype</title>
+<!-- Design reference only. Not production code. Source of truth for layout, tokens and interactions: docs/DESIGN.md -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&amp;family=JetBrains+Mono:wght@300;400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0A0C0D}
+a{color:#9FE7C4;text-decoration:none}a:hover{color:#C8F5DF}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:inherit}
+input::placeholder{color:#7F8A91}
+button:focus-visible,a:focus-visible{outline:1px solid #4ADE9A;outline-offset:2px}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.pulse{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.blink{animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.fade{animation:fade .45s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.field{border:1px solid #1F2529;transition:border-color .15s}
+.field:hover{border-color:#2E373C}
+.field.invalid{border-color:#4A2626}
+.field:focus-within{border-color:#4ADE9A}
+.submit{transition:background .15s,color .15s}
+.submit:hover{background:rgba(74,222,154,.08)}
+.toggle{transition:color .15s}
+.toggle:hover{color:#E6ECEE}
+.scan{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px)}
+</style>
+<style>.settled .fade{animation:none}@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}</style>
+</head>
+<body>
+<div id="root"></div>
+<template id="tpl">
+
+<div class="{{scanClass}}" style="min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background-color: #0A0C0D; color: #D5DBDE; font-family: 'Inter', system-ui, sans-serif; font-weight: 300; font-size: 12.5px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 14px 20px 12px; border-bottom: 1px solid #1A1F22">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1 L17 9 L9 17 L1 9 Z" fill="none" stroke="{{accent}}" stroke-width="1"></path><path d="M9 5.5 L12.5 9 L9 12.5 L5.5 9 Z" fill="{{accent}}"></path></svg>
+<span class="mono" style="font-size: 12px; font-weight: 500; letter-spacing: 0.04em; color: #E6ECEE">~/trakk</span>
+<span class="mono" style="font-size: 10px; color: #7F8A91; border: 1px solid #22282C; border-radius: 3px; padding: 2px 5px">auth</span>
+</div>
+<div class="mono" style="display: flex; align-items: center; gap: 12px; font-size: 10.5px; color: #8B969D">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span class="pulse" style="width: 6px; height: 6px; border-radius: 50%; background: {{accent}}"></span>system online</span>
+<span style="color: #E6ECEE">{{clock}}</span>
+</div>
+</header>
+
+<main style="flex: 1 1 auto; display: flex; align-items: center; justify-content: center; padding: 40px 16px">
+<div style="width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px">
+
+<div class="mono" aria-hidden="true" style="display: flex; flex-direction: column; gap: 1px; padding: 0 4px; font-size: 11px; line-height: 1.75">
+<sc-for list="{{boot}}" as="b" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 66px 14px minmax(0, 1fr); gap: 6px">
+<span style="color: #7F8A91">{{b.t}}</span>
+<span style="color: {{b.symColor}}">{{b.sym}}</span>
+<span style="color: #C3CBCF">{{b.txt}}</span>
+</div>
+</sc-for>
+</div>
+
+<section aria-labelledby="h-signin" style="position: relative; background: #0F1214; border: 1px solid #1F2529; border-radius: 6px; padding: 28px 28px 22px">
+<span aria-hidden="true" style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border-top: 1px solid {{accent}}; border-left: 1px solid {{accent}}; border-top-left-radius: 6px"></span>
+<span aria-hidden="true" style="position: absolute; top: -1px; right: -1px; width: 12px; height: 12px; border-top: 1px solid #3A4348; border-right: 1px solid #3A4348; border-top-right-radius: 6px"></span>
+<span aria-hidden="true" style="position: absolute; bottom: -1px; left: -1px; width: 12px; height: 12px; border-bottom: 1px solid #3A4348; border-left: 1px solid #3A4348; border-bottom-left-radius: 6px"></span>
+<span aria-hidden="true" style="position: absolute; bottom: -1px; right: -1px; width: 12px; height: 12px; border-bottom: 1px solid {{accent}}; border-right: 1px solid {{accent}}; border-bottom-right-radius: 6px"></span>
+
+<div style="display: flex; align-items: center; gap: 14px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #1A1F22">
+<svg width="40" height="40" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1 L17 9 L9 17 L1 9 Z" fill="none" stroke="{{accent}}" stroke-width="0.6"></path><path d="M9 5.5 L12.5 9 L9 12.5 L5.5 9 Z" fill="{{accent}}"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 id="h-signin" style="margin: 0; font-size: 28px; font-weight: 300; line-height: 1; letter-spacing: -0.02em; color: #EEF2F3">Trakk</h1>
+<span class="mono" style="font-size: 10.5px; letter-spacing: 0.06em; color: #8B969D">goals · pace · focus</span>
+</div>
+</div>
+
+<form onSubmit="{{submit}}" novalidate style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="email" class="mono" style="font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #8B969D">Email</label>
+<div class="field {{fieldClass}}" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; box-sizing: border-box; background: #0E1113; border-radius: 5px">
+<span class="mono" aria-hidden="true" style="color: {{accent}}; font-size: 12px">›</span>
+<input id="email" name="email" type="email" autocomplete="username" placeholder="you@domain.com" class="mono" style="flex: 1 1 auto; min-width: 0; height: 40px; background: transparent; border: 0; outline: none; font-size: 12px; color: #E6ECEE">
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="password" class="mono" style="font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #8B969D">Password</label>
+<div class="field {{fieldClass}}" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 0 0 12px; box-sizing: border-box; background: #0E1113; border-radius: 5px">
+<span class="mono" aria-hidden="true" style="color: {{accent}}; font-size: 12px">›</span>
+<input id="password" name="password" type="{{pwType}}" autocomplete="current-password" placeholder="••••••••••" class="mono" style="flex: 1 1 auto; min-width: 0; height: 40px; background: transparent; border: 0; outline: none; font-size: 12px; letter-spacing: 0.08em; color: #E6ECEE">
+<button type="button" class="toggle mono" aria-pressed="{{pwPressed}}" aria-label="{{pwAria}}" onClick="{{togglePw}}" style="flex: none; width: 56px; height: 42px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #8B969D; text-align: center; border-left: 1px solid #1A1F22">{{pwLabel}}</button>
+</div>
+</div>
+
+<sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}">
+<div role="alert" class="mono fade" style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #4A2626; border-radius: 4px; font-size: 10.5px; color: #FF6B6B"><span>×</span><span>{{errorTxt}}</span></div>
+</sc-if>
+
+<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+<div role="status" class="mono fade" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px; border: 1px solid #1F6145; border-radius: 4px; font-size: 10.5px; color: {{accent}}"><span>✓ access granted</span><a href="dashboard.html">open dashboard →</a></div>
+</sc-if>
+
+<button type="submit" class="submit mono" aria-busy="{{busy}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; margin-top: 4px; border: 1px solid {{accent}}; border-radius: 5px; font-size: 11.5px; letter-spacing: 0.04em; color: {{accent}}">
+<sc-if value="{{isIdle}}" hint-placeholder-val="{{ true }}"><span>sign in</span><span aria-hidden="true">→</span></sc-if>
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}"><span>authenticating</span><span class="blink" aria-hidden="true">_</span></sc-if>
+</button>
+</form>
+
+<div class="mono" style="display: flex; justify-content: space-between; gap: 8px; margin-top: 18px; padding-top: 12px; border-top: 1px solid #1A1F22; font-size: 10px; color: #7F8A91">
+<span>single-user instance</span>
+<span>access is logged</span>
+</div>
+</section>
+
+<div class="mono" style="text-align: center; font-size: 10px; color: #7F8A91">v0.1 · tls · Europe/Dublin</div>
+</div>
+</main>
+
+<footer class="mono" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding: 10px 20px 14px; border-top: 1px solid #1A1F22; font-size: 10px; color: #7F8A91">
+<span><span style="color: {{accent}}">●</span> secure session · postgres · mcp ready</span>
+<span>trakk</span>
+</footer>
+
+</div>
+</template>
+<script>
+
+function get(path, scope) {
+  path = path.trim();
+  if (path === 'true') return true;
+  if (path === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(path)) return +path;
+  return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), scope);
+}
+function interp(str, scope) {
+  return str.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (m, p) => { const v = get(p, scope); return v == null ? '' : String(v); });
+}
+function proc(node, scope) {
+  if (node.nodeType === 3) return [document.createTextNode(interp(node.nodeValue, scope))];
+  if (node.nodeType !== 1) return [];
+  const tag = node.tagName.toLowerCase();
+  if (tag === 'sc-for') {
+    const list = get(node.getAttribute('list').replace(/[{}]/g, ''), scope) || [];
+    const as = node.getAttribute('as');
+    const out = [];
+    list.forEach((item, i) => {
+      const s = Object.assign({}, scope, { [as]: item, $index: i });
+      node.childNodes.forEach((c) => out.push(...proc(c, s)));
+    });
+    return out;
+  }
+  if (tag === 'sc-if') {
+    if (!get(node.getAttribute('value').replace(/[{}]/g, ''), scope)) return [];
+    const out = [];
+    node.childNodes.forEach((c) => out.push(...proc(c, scope)));
+    return out;
+  }
+  const svg = node.namespaceURI === 'http://www.w3.org/2000/svg';
+  const el = svg ? document.createElementNS(node.namespaceURI, node.tagName) : document.createElement(node.tagName);
+  for (const a of node.attributes) {
+    if (a.name.startsWith('hint-')) continue;
+    if (/^on[a-z]+$/.test(a.name)) {
+      const fn = get(a.value.replace(/[{}]/g, ''), scope);
+      if (typeof fn === 'function') el.addEventListener(a.name.slice(2), fn);
+      continue;
+    }
+    el.setAttribute(a.name, interp(a.value, scope));
+  }
+  if ([...node.childNodes].some((c) => c.nodeType === 3 && /\{\{\s*clock\s*\}\}/.test(c.nodeValue))) el.dataset.live = 'clock';
+  node.childNodes.forEach((c) => proc(c, scope).forEach((n) => el.appendChild(n)));
+  return [el];
+}
+class DCLogic {
+  constructor() { this.props = {}; this.state = null; }
+  setState(patch) {
+    this.state = Object.assign({}, this.state || {}, patch);
+    const keys = Object.keys(patch);
+    if (keys.length === 1 && keys[0] === 'tick') return this.__tick();
+    this.__render();
+  }
+  forceUpdate() { this.__render(); }
+}
+
+
+class Component extends DCLogic {
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState({ tick: Date.now() }), 1000);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+    clearTimeout(this.pending);
+  }
+  stamp(d) {
+    const p = (n) => String(n).padStart(2, '0');
+    return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  submit(e) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const email = String(data.get('email') || '').trim();
+    const password = String(data.get('password') || '');
+    if (!email || !password) {
+      this.setState({ status: 'error', error: 'email and password are required' });
+      return;
+    }
+    this.setState({ status: 'loading', error: '' });
+    clearTimeout(this.pending);
+    this.pending = setTimeout(() => this.setState({ status: 'done' }), 900);
+  }
+  renderVals() {
+    const s = this.state || {};
+    const accent = this.props.accent ?? '#4ADE9A';
+    const scan = this.props.scanlines ?? true;
+    const preview = this.props.preview ?? 'live';
+    if (!this.bootedAt) this.bootedAt = new Date();
+    const t0 = this.stamp(this.bootedAt);
+
+    let status = s.status || 'idle';
+    let error = s.error || '';
+    if (preview === 'error' && !s.status) { status = 'error'; error = 'invalid credentials'; }
+    if (preview === 'loading' && !s.status) status = 'loading';
+
+    const showPw = !!s.showPw;
+    const hasError = status === 'error';
+
+    return {
+      accent,
+      scanClass: scan ? 'scan' : '',
+      clock: this.stamp(new Date()),
+      boot: [
+        { id: 'b1', t: t0, sym: '✓', symColor: accent, txt: 'postgres · connected' },
+        { id: 'b2', t: t0, sym: '✓', symColor: accent, txt: 'mcp · 6 tools ready' },
+        { id: 'b3', t: t0, sym: '›', symColor: '#6CB4FF', txt: 'auth required' }
+      ],
+      pwType: showPw ? 'text' : 'password',
+      pwLabel: showPw ? 'hide' : 'show',
+      pwPressed: showPw ? 'true' : 'false',
+      pwAria: showPw ? 'Hide password' : 'Show password',
+      togglePw: () => this.setState({ showPw: !showPw }),
+      fieldClass: hasError ? 'invalid' : '',
+      hasError,
+      errorTxt: error,
+      isIdle: status === 'idle' || status === 'error',
+      isLoading: status === 'loading',
+      isDone: status === 'done',
+      busy: status === 'loading' ? 'true' : 'false',
+      submit: (e) => this.submit(e)
+    };
+  }
+}
+
+
+const app = new Component();
+const tpl = document.getElementById('tpl').content;
+const root = document.getElementById('root');
+app.__render = () => {
+  const vals = app.renderVals();
+  const kept = {};
+  root.querySelectorAll('input[name]').forEach((el) => { kept[el.name] = el.value; });
+  const focused = document.activeElement && document.activeElement.id;
+  const nodes = [];
+  tpl.childNodes.forEach((n) => nodes.push(...proc(n, vals)));
+  root.replaceChildren(...nodes);
+  root.querySelectorAll('input[name]').forEach((el) => { if (el.name in kept) el.value = kept[el.name]; });
+  if (focused && document.getElementById(focused)) document.getElementById(focused).focus();
+};
+app.__tick = () => {
+  const vals = app.renderVals();
+  root.querySelectorAll('[data-live="clock"]').forEach((el) => {
+    el.textContent = vals.clock;
+  });
+};
+app.__render();
+requestAnimationFrame(() => setTimeout(() => root.classList.add('settled'), 600));
+if (app.componentDidMount) app.componentDidMount();
+
+</script>
+</body>
+</html>

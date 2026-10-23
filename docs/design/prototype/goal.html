@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Goal detail · Trakk prototype</title>
+<!-- Design reference only. Not production code. Source of truth for layout, tokens and interactions: docs/DESIGN.md -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&amp;family=JetBrains+Mono:wght@300;400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0A0C0D}
+a{color:#9FE7C4;text-decoration:none}a:hover{color:#C8F5DF}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+button:focus-visible,a:focus-visible{outline:1px solid #4ADE9A;outline-offset:2px}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.pulse{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.blink{animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.row{transition:background .15s}
+.row:hover{background:#13181B}
+.card{transition:border-color .2s}
+.card:hover{border-color:#2E373C}
+.chk{transition:border-color .15s,color .15s}
+.chk:hover{border-color:#8B969D;color:#E6ECEE}
+.fade{animation:fade .45s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.grow{transition:width .45s ease}
+.scan{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px)}
+</style>
+<style>.settled .fade{animation:none}@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}</style>
+</head>
+<body>
+<div id="root"></div>
+<template id="tpl">
+
+<div class="{{scanClass}}" style="min-height: 100vh; box-sizing: border-box; background-color: #0A0C0D; color: #D5DBDE; font-family: 'Inter', system-ui, sans-serif; font-weight: 300; font-size: 12.5px; padding-bottom: 28px">
+<div style="max-width: 1440px; margin: 0 auto; padding: 0 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 0 12px; border-bottom: 1px solid #1A1F22">
+<nav aria-label="Breadcrumb" class="mono" style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #7F8A91">
+<a href="dashboard.html">← dashboard</a>
+<span>/</span><span>goals</span><span>/</span><span style="color: #E6ECEE">nomad-visa</span>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; margin-left: auto">
+<span class="mono" style="display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; color: #8B969D; padding: 0 6px"><span class="pulse" style="width: 6px; height: 6px; border-radius: 50%; background: {{accent}}"></span>synced</span>
+<button class="chk mono" style="height: 34px; padding: 0 12px; border: 1px solid #2A3135; border-radius: 5px; font-size: 11px; color: #B7C0C4">edit</button>
+<button class="mono" style="height: 34px; padding: 0 12px; border: 1px solid {{accent}}; border-radius: 5px; font-size: 11px; color: {{accent}}">+ task</button>
+</div>
+</header>
+
+<section aria-labelledby="h-title" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px">
+<span style="width: 12px; height: 12px; border-radius: 3px; background: #F2B03D"></span>
+<h1 id="h-title" style="margin: 0; font-size: 24px; font-weight: 300; letter-spacing: -0.01em; color: #EEF2F3">Digital nomad visa · Spain</h1>
+<span class="mono" style="font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #8B969D; border: 1px solid #2A3135; border-radius: 3px; padding: 3px 6px">project</span>
+<span class="mono" style="font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #F2B03D; border: 1px solid #4A3B1C; border-radius: 3px; padding: 3px 6px">high priority</span>
+<span class="mono" style="font-size: 10.5px; color: {{stColor}}">● {{stTxt}}</span>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: #1A1F22; border: 1px solid #1A1F22; border-radius: 6px; overflow: hidden">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="8">
+<div style="background: #0F1214; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<dt class="mono" style="font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #8B969D">{{f.k}}</dt>
+<dd class="mono" style="margin: 0; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #E6ECEE"><sc-if value="{{f.swatch}}" hint-placeholder-val="{{ false }}"><span style="width: 10px; height: 10px; border-radius: 2px; background: #F2B03D"></span></sc-if>{{f.v}}</dd>
+</div>
+</sc-for>
+</dl>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+
+<section aria-labelledby="h-objective" style="flex: 1 1 300px; min-width: 0; background: #0F1214; border: 1px solid #1F2529; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-objective" class="mono" style="margin: 0; padding-bottom: 10px; border-bottom: 1px solid #1A1F22; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #B7C0C4">Objective</h2>
+<p style="margin: 0; font-size: 13px; line-height: 1.6; color: #D5DBDE">Gather, translate and apostille every document the digital nomad visa requires, and file the application before the deadline.</p>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px dashed #2A3135; border-radius: 4px">
+<span class="mono" style="font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: {{accent}}">done when</span>
+<span style="font-size: 12.5px; line-height: 1.5; color: #D5DBDE">Application filed with every document accepted.</span>
+</div>
+<div class="mono" style="margin-top: auto; font-size: 10.5px; line-height: 1.6; color: #8B969D">area · relocation<br>linked to · moving fund</div>
+</section>
+
+<section aria-labelledby="h-pace" style="flex: 1.6 1 460px; min-width: 0; background: #0F1214; border: 1px solid #1F2529; border-radius: 6px; padding: 12px 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid #1A1F22">
+<h2 id="h-pace" class="mono" style="margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #B7C0C4">Pace · actual vs expected</h2>
+<div class="mono" style="display: flex; gap: 12px; font-size: 9.5px; color: #8B969D">
+<span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 12px; height: 0; border-top: 1px solid #F2B03D"></span>actual</span>
+<span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 12px; height: 0; border-top: 1px dashed #8B969D"></span>expected</span>
+<span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 12px; height: 0; border-top: 1px dotted #FF6B6B"></span>projection</span>
+</div>
+</div>
+<svg role="img" aria-label="{{chartAria}}" width="100%" height="170" viewBox="0 0 560 160" preserveAspectRatio="xMidYMid meet">
+<line x1="40" y1="12" x2="550" y2="12" stroke="#1A1F22" stroke-width="1"></line>
+<line x1="40" y1="41.5" x2="550" y2="41.5" stroke="#1A1F22" stroke-width="1"></line>
+<line x1="40" y1="71" x2="550" y2="71" stroke="#1A1F22" stroke-width="1"></line>
+<line x1="40" y1="100.5" x2="550" y2="100.5" stroke="#1A1F22" stroke-width="1"></line>
+<line x1="40" y1="130" x2="550" y2="130" stroke="#2A3135" stroke-width="1"></line>
+<text x="32" y="15" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#7F8A91">100</text>
+<text x="32" y="74" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#7F8A91">50</text>
+<text x="32" y="133" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#7F8A91">0</text>
+<text x="40" y="148" font-family="JetBrains Mono, monospace" font-size="9" fill="#7F8A91">01 jul</text>
+<text x="196" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#7F8A91">sep</text>
+<text x="352" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#7F8A91">nov</text>
+<text x="550" y="148" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#7F8A91">15 jan</text>
+<line x1="40" y1="130" x2="550" y2="12" stroke="#8B969D" stroke-width="1" stroke-dasharray="3 3"></line>
+<line x1="{{todayX}}" y1="8" x2="{{todayX}}" y2="134" stroke="{{accent}}" stroke-width="1" opacity="0.6"></line>
+<text x="{{todayX}}" y="158" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="{{accent}}">today</text>
+<line x1="{{todayX}}" y1="{{realY}}" x2="550" y2="{{projY}}" stroke="#FF6B6B" stroke-width="1" stroke-dasharray="1 3"></line>
+<polyline points="{{realPts}}" fill="none" stroke="#F2B03D" stroke-width="1.5"></polyline>
+<circle cx="{{todayX}}" cy="{{realY}}" r="3" fill="#0F1214" stroke="#F2B03D" stroke-width="1.5"></circle>
+<circle cx="{{todayX}}" cy="{{expY}}" r="2.5" fill="#8B969D"></circle>
+<text x="556" y="{{projLabelY}}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#FF6B6B">{{projPct}}%</text>
+</svg>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 6px; padding-top: 10px; border-top: 1px solid #1A1F22">
+<sc-for list="{{stats}}" as="st" hint-placeholder-count="4">
+<div style="min-width: 0">
+<div class="mono" style="font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #8B969D">{{st.k}}</div>
+<div class="mono" style="font-size: 17px; font-weight: 300; color: {{st.color}}">{{st.v}}<span style="font-size: 10.5px; color: #7F8A91">{{st.unit}}</span></div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-progress" style="flex: 0.8 1 240px; min-width: 0; background: #0F1214; border: 1px solid #1F2529; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="h-progress" class="mono" style="margin: 0; padding-bottom: 10px; border-bottom: 1px solid #1A1F22; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #B7C0C4">Progress</h2>
+<div style="display: flex; align-items: baseline; gap: 6px">
+<span class="mono" style="font-size: 44px; font-weight: 300; line-height: 1; color: #EEF2F3">{{pct}}</span>
+<span class="mono" style="font-size: 14px; color: #7F8A91">%</span>
+<span class="mono" style="margin-left: auto; font-size: 10.5px; color: #8B969D">{{doneCount}}/20</span>
+</div>
+<div style="position: relative; height: 4px; background: #1A1F22; border-radius: 2px">
+<div class="grow" style="width: {{pct}}%; height: 100%; background: #F2B03D; border-radius: 2px"></div>
+<div style="position: absolute; top: -4px; left: 58%; width: 1px; height: 12px; background: #D5DBDE"></div>
+</div>
+<div class="mono" style="display: flex; justify-content: space-between; font-size: 10px; color: #8B969D"><span>actual {{pct}}%</span><span>expected 58%</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+<sc-for list="{{split}}" as="sp" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 64px minmax(0, 1fr) 24px; gap: 8px; align-items: center">
+<span class="mono" style="font-size: 10px; color: #8B969D">{{sp.label}}</span>
+<span style="height: 3px; background: #1A1F22; border-radius: 2px; overflow: hidden"><span class="grow" style="display: block; width: {{sp.w}}%; height: 100%; background: {{sp.c}}"></span></span>
+<span class="mono" style="font-size: 10.5px; color: #E6ECEE; text-align: right">{{sp.n}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+</div>
+
+<section aria-labelledby="h-board" style="background: #0F1214; border: 1px solid #1F2529; border-radius: 6px; padding: 12px 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid #1A1F22">
+<h2 id="h-board" class="mono" style="margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #B7C0C4">Board <span style="color: #7F8A91; font-weight: 400">· 20 tasks</span></h2>
+<span class="mono" style="font-size: 10px; color: #8B969D">→ advance · ↺ reopen</span>
+</div>
+<div style="overflow-x: auto">
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; min-width: 640px; align-items: start">
+<sc-for list="{{columns}}" as="col" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 6px; background: #0C0F10; border: 1px solid #1A1F22; border-radius: 5px; padding: 8px">
+<div class="mono" style="display: flex; justify-content: space-between; padding: 2px 2px 4px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #B7C0C4"><span><span style="color: {{col.dot}}">●</span> {{col.label}}</span><span style="color: #7F8A91">{{col.count}}</span></div>
+<sc-for list="{{col.cards}}" as="c" hint-placeholder-count="5">
+<div class="card fade" style="display: flex; gap: 8px; align-items: flex-start; background: #12161A; border: 1px solid {{c.border}}; border-radius: 4px; padding: 8px 8px 8px 10px">
+<div style="flex: 1 1 auto; min-width: 0">
+<div style="font-size: 12px; line-height: 1.35; color: {{c.tc}}; text-decoration: {{c.deco}}">{{c.t}}</div>
+<div class="mono" style="display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 5px; font-size: 9.5px; color: #8B969D">
+<span>{{c.sub}} items</span>
+<span style="color: {{c.dueColor}}">{{c.dueTxt}}</span>
+<sc-if value="{{c.hasTag}}" hint-placeholder-val="{{ false }}"><span style="color: #F2B03D">{{c.tag}}</span></sc-if>
+</div>
+<div style="margin-top: 6px; height: 2px; background: #1A1F22; border-radius: 1px; overflow: hidden"><div class="grow" style="width: {{c.subPct}}%; height: 100%; background: {{c.subColor}}"></div></div>
+</div>
+<button class="chk mono" aria-label="{{c.moveLabel}}" onClick="{{c.move}}" style="flex: none; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #2A3135; border-radius: 4px; font-size: 12px; color: #B7C0C4">{{c.btn}}</button>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+
+<section aria-labelledby="h-reminders" style="flex: 1 1 320px; min-width: 0; background: #0F1214; border: 1px solid #1F2529; border-radius: 6px; padding: 12px 10px 8px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 10px; margin-bottom: 4px; border-bottom: 1px solid #1A1F22">
+<h2 id="h-reminders" class="mono" style="margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #B7C0C4">Reminders for this goal</h2>
+<span class="mono" style="font-size: 10px; color: #8B969D">telegram</span>
+</div>
+<sc-for list="{{reminders}}" as="r" hint-placeholder-count="3">
+<div class="row" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 6px; border-radius: 4px">
+<span class="mono" style="flex: none; width: 78px; font-size: 11px; color: #E6ECEE">{{r.when}}</span>
+<span style="flex: 1 1 auto; min-width: 0; font-size: 12.5px; color: #D5DBDE">{{r.label}}</span>
+<span class="mono" style="flex: none; font-size: 10px; color: #8B969D">{{r.freq}}</span>
+</div>
+</sc-for>
+</section>
+
+<section aria-labelledby="h-log" style="flex: 1 1 360px; min-width: 0; background: #0C0F10; border: 1px solid #1F2529; border-radius: 6px; padding: 12px 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #1A1F22">
+<h2 id="h-log" class="mono" style="margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #B7C0C4">History</h2>
+<span class="mono" style="display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: #8B969D"><span class="pulse" style="width: 5px; height: 5px; border-radius: 50%; background: {{accent}}"></span>live</span>
+</div>
+<div class="mono" aria-live="polite" style="display: flex; flex-direction: column; gap: 1px; font-size: 11px; line-height: 1.75">
+<sc-for list="{{log}}" as="l" hint-placeholder-count="6">
+<div class="fade" style="display: grid; grid-template-columns: 64px 14px minmax(0, 1fr); gap: 6px; align-items: baseline">
+<span style="color: #7F8A91; white-space: nowrap">{{l.t}}</span>
+<span style="color: {{l.symColor}}">{{l.sym}}</span>
+<span style="color: #C3CBCF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{l.txt}}</span>
+</div>
+</sc-for>
+<div style="color: #7F8A91">›<span class="blink" style="color: {{accent}}"> _</span></div>
+</div>
+</section>
+
+</div>
+
+</div>
+</div>
+</template>
+<script>
+
+function get(path, scope) {
+  path = path.trim();
+  if (path === 'true') return true;
+  if (path === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(path)) return +path;
+  return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), scope);
+}
+function interp(str, scope) {
+  return str.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (m, p) => { const v = get(p, scope); return v == null ? '' : String(v); });
+}
+function proc(node, scope) {
+  if (node.nodeType === 3) return [document.createTextNode(interp(node.nodeValue, scope))];
+  if (node.nodeType !== 1) return [];
+  const tag = node.tagName.toLowerCase();
+  if (tag === 'sc-for') {
+    const list = get(node.getAttribute('list').replace(/[{}]/g, ''), scope) || [];
+    const as = node.getAttribute('as');
+    const out = [];
+    list.forEach((item, i) => {
+      const s = Object.assign({}, scope, { [as]: item, $index: i });
+      node.childNodes.forEach((c) => out.push(...proc(c, s)));
+    });
+    return out;
+  }
+  if (tag === 'sc-if') {
+    if (!get(node.getAttribute('value').replace(/[{}]/g, ''), scope)) return [];
+    const out = [];
+    node.childNodes.forEach((c) => out.push(...proc(c, scope)));
+    return out;
+  }
+  const svg = node.namespaceURI === 'http://www.w3.org/2000/svg';
+  const el = svg ? document.createElementNS(node.namespaceURI, node.tagName) : document.createElement(node.tagName);
+  for (const a of node.attributes) {
+    if (a.name.startsWith('hint-')) continue;
+    if (/^on[a-z]+$/.test(a.name)) {
+      const fn = get(a.value.replace(/[{}]/g, ''), scope);
+      if (typeof fn === 'function') el.addEventListener(a.name.slice(2), fn);
+      continue;
+    }
+    el.setAttribute(a.name, interp(a.value, scope));
+  }
+  if ([...node.childNodes].some((c) => c.nodeType === 3 && /\{\{\s*clock\s*\}\}/.test(c.nodeValue))) el.dataset.live = 'clock';
+  node.childNodes.forEach((c) => proc(c, scope).forEach((n) => el.appendChild(n)));
+  return [el];
+}
+class DCLogic {
+  constructor() { this.props = {}; this.state = null; }
+  setState(patch) {
+    this.state = Object.assign({}, this.state || {}, patch);
+    const keys = Object.keys(patch);
+    if (keys.length === 1 && keys[0] === 'tick') return this.__tick();
+    this.__render();
+  }
+  forceUpdate() { this.__render(); }
+}
+
+
+class Component extends DCLogic {
+  tasks() {
+    return [
+      { id: 't1', t: 'Health insurance, no co-pay', due: '24 oct', sub: [0, 3], tag: 'critical' },
+      { id: 't2', t: 'Bank statements · 3 months', due: '22 oct', sub: [1, 3], late: true },
+      { id: 't3', t: 'Apostille diploma', due: '20 oct', sub: [0, 2], late: true },
+      { id: 't4', t: 'Apostilled criminal record', due: '05 nov', sub: [0, 2] },
+      { id: 't5', t: 'Application form filled in', due: '10 nov', sub: [0, 1] },
+      { id: 't6', t: 'Proof of income · 3 months', due: '12 nov', sub: [1, 3] },
+      { id: 't7', t: 'Pay application fee', due: '15 nov', sub: [0, 1] },
+      { id: 't8', t: 'Book filing appointment', due: '20 nov', sub: [0, 1], tag: 'milestone' },
+      { id: 't9', t: 'Photos in required format', due: '25 nov', sub: [0, 1] },
+      { id: 't10', t: 'Sworn translation', due: '28 oct', sub: [2, 5] },
+      { id: 't11', t: 'Apostilled marriage certificate', due: '30 oct', sub: [1, 2] },
+      { id: 't12', t: 'Passport · certified copy', due: '05 oct', sub: [2, 2] },
+      { id: 't13', t: 'Remote work contract', due: '10 oct', sub: [3, 3] },
+      { id: 't14', t: 'Employer letter', due: '12 oct', sub: [1, 1] },
+      { id: 't15', t: 'Proof of 3+ months employment', due: '14 oct', sub: [1, 1] },
+      { id: 't16', t: 'Scanned diploma', due: '20 sep', sub: [1, 1] },
+      { id: 't17', t: 'Updated CV', due: '15 sep', sub: [1, 1] },
+      { id: 't18', t: 'Official document checklist', due: '01 sep', sub: [1, 1] },
+      { id: 't19', t: 'Research requirements and deadlines', due: '20 aug', sub: [1, 1] },
+      { id: 't20', t: 'Process cost spreadsheet', due: '10 aug', sub: [1, 1] }
+    ];
+  }
+  defSt() {
+    const st = {};
+    for (let i = 1; i <= 9; i++) st['t' + i] = 'todo';
+    st.t10 = 'doing';
+    st.t11 = 'doing';
+    for (let i = 12; i <= 20; i++) st['t' + i] = 'done';
+    return st;
+  }
+  defLog() {
+    return [
+      { id: 'l1', t: '22 oct', sym: '!', kind: 'warn', txt: 'bank statements overdue' },
+      { id: 'l2', t: '20 oct', sym: '!', kind: 'warn', txt: 'apostille diploma overdue' },
+      { id: 'l3', t: '14 oct', sym: '✓', kind: 'ok', txt: 'proof of employment completed' },
+      { id: 'l4', t: '12 oct', sym: '✓', kind: 'ok', txt: 'employer letter completed' },
+      { id: 'l5', t: '10 oct', sym: '→', kind: 'info', txt: 'sworn translation → doing' },
+      { id: 'l6', t: '10 oct', sym: '✓', kind: 'ok', txt: 'remote work contract completed' }
+    ];
+  }
+  move(task, to, label) {
+    const s = this.state || {};
+    const st = Object.assign({}, s.st || this.defSt());
+    st[task.id] = to;
+    const d = new Date();
+    const t = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const entry = { id: 'l' + Date.now(), t: 'today ' + t, sym: to === 'done' ? '✓' : (to === 'todo' ? '↺' : '→'), kind: to === 'done' ? 'ok' : 'info', txt: task.t.toLowerCase() + ' → ' + label };
+    this.setState({ st, log: [entry].concat(s.log || this.defLog()).slice(0, 8) });
+  }
+  renderVals() {
+    const s = this.state || {};
+    const accent = this.props.accent ?? '#4ADE9A';
+    const scan = this.props.scanlines ?? true;
+    const st = s.st || this.defSt();
+    const TASKS = this.tasks();
+    const counts = { todo: 0, doing: 0, done: 0 };
+    TASKS.forEach((t) => { counts[st[t.id]]++; });
+    const doneCount = counts.done;
+    const pct = Math.round(doneCount / 20 * 100);
+    const EXP = 58;
+    const diff = pct - EXP;
+    const stTxt = diff <= -5 ? 'behind ' + diff + '%' : (diff < 0 ? 'watch ' + diff + '%' : (diff >= 5 ? 'ahead +' + diff + '%' : 'on pace'));
+    const stColor = diff <= -5 ? '#FF6B6B' : (diff < 0 ? '#F2B03D' : accent);
+
+    const TOTAL = 198;
+    const ELAPSED = 114;
+    const x = (day) => 40 + day / TOTAL * 510;
+    const yv = (p) => 12 + (1 - p / 100) * 118;
+    const pts = [[0, 0], [28, 10], [56, 20], [84, 35], [ELAPSED, pct]];
+    const realPts = pts.map((p) => x(p[0]).toFixed(1) + ',' + yv(p[1]).toFixed(1)).join(' ');
+    const rate = pct / ELAPSED;
+    const projPct = Math.min(100, Math.round(pct + rate * (TOTAL - ELAPSED)));
+    const left = 20 - doneCount;
+    const needWk = (left / 12).toFixed(1);
+    const curWk = (doneCount / (ELAPSED / 7)).toFixed(1);
+
+    const COLS = [
+      { id: 'todo', label: 'to do', dot: '#8B969D', next: 'doing', nextLabel: 'doing', btn: '→' },
+      { id: 'doing', label: 'doing', dot: '#F2B03D', next: 'done', nextLabel: 'done', btn: '→' },
+      { id: 'done', label: 'done', dot: accent, next: 'todo', nextLabel: 'to do', btn: '↺' }
+    ];
+    const columns = COLS.map((col) => {
+      const isDone = col.id === 'done';
+      const cards = TASKS.filter((t) => st[t.id] === col.id).map((t) => {
+        const late = !!t.late && !isDone;
+        const subDone = isDone ? t.sub[1] : t.sub[0];
+        return {
+          id: t.id, t: t.t,
+          sub: subDone + '/' + t.sub[1],
+          subPct: Math.round(subDone / t.sub[1] * 100),
+          subColor: isDone ? '#3A4348' : (late ? '#FF6B6B' : '#F2B03D'),
+          dueTxt: isDone ? 'completed' : (late ? 'overdue ' + t.due : 'due ' + t.due),
+          dueColor: late ? '#FF6B6B' : '#8B969D',
+          border: late ? '#4A2626' : '#1F2529',
+          tc: isDone ? '#7F8A91' : '#D5DBDE',
+          deco: isDone ? 'line-through' : 'none',
+          hasTag: !!t.tag && !isDone, tag: t.tag || '',
+          btn: col.btn,
+          moveLabel: (isDone ? 'Reopen "' : 'Move "') + t.t + '" to ' + col.nextLabel,
+          move: () => this.move(t, col.next, col.nextLabel)
+        };
+      });
+      return { id: col.id, label: col.label, dot: col.dot, count: String(cards.length), cards };
+    });
+
+    const lateOpen = TASKS.filter((t) => t.late && st[t.id] !== 'done').length;
+    const fields = [
+      { id: 'f1', k: 'start', v: '01 jul 2026' },
+      { id: 'f2', k: 'due date', v: '15 jan 2027' },
+      { id: 'f3', k: 'remaining', v: '84 days' },
+      { id: 'f4', k: 'type', v: 'project' },
+      { id: 'f5', k: 'priority', v: 'high' },
+      { id: 'f6', k: 'frequency', v: '—' },
+      { id: 'f7', k: 'color', v: '#F2B03D', swatch: true },
+      { id: 'f8', k: 'overdue', v: String(lateOpen) }
+    ];
+    const stats = [
+      { id: 's1', k: 'expected today', v: String(EXP), unit: '%', color: '#E6ECEE' },
+      { id: 's2', k: 'projected at due', v: String(projPct), unit: '%', color: projPct >= 100 ? accent : '#FF6B6B' },
+      { id: 's3', k: 'current pace', v: curWk, unit: ' tasks/wk', color: '#E6ECEE' },
+      { id: 's4', k: 'required pace', v: needWk, unit: ' tasks/wk', color: '#F2B03D' }
+    ];
+    const split = [
+      { id: 'p1', label: 'to do', n: counts.todo, w: counts.todo / 20 * 100, c: '#3A4348' },
+      { id: 'p2', label: 'doing', n: counts.doing, w: counts.doing / 20 * 100, c: '#F2B03D' },
+      { id: 'p3', label: 'done', n: counts.done, w: counts.done / 20 * 100, c: accent }
+    ];
+    const reminders = [
+      { id: 'r1', when: 'day before', label: 'Task due tomorrow alert', freq: '18:00' },
+      { id: 'r2', when: 'monday', label: 'Pace summary for this goal', freq: '09:00' },
+      { id: 'r3', when: '01 jan', label: 'Alert: 14 days to deadline', freq: 'once' }
+    ];
+    const KIND = { ok: accent, info: '#6CB4FF', warn: '#F2B03D' };
+    const log = (s.log || this.defLog()).map((l) => ({ id: l.id, t: l.t, sym: l.sym, txt: l.txt, symColor: KIND[l.kind] || '#8B969D' }));
+
+    return {
+      accent,
+      scanClass: scan ? 'scan' : '',
+      stTxt, stColor,
+      fields, stats, split,
+      pct, doneCount,
+      todayX: x(ELAPSED).toFixed(1),
+      realY: yv(pct).toFixed(1),
+      expY: yv(EXP).toFixed(1),
+      projY: yv(projPct).toFixed(1),
+      projLabelY: (yv(projPct) - 5).toFixed(1),
+      realPts, projPct,
+      chartAria: 'Actual progress ' + pct + '% against ' + EXP + '% expected today. At the current pace the goal reaches ' + projPct + '% by the due date.',
+      columns, reminders, log
+    };
+  }
+}
+
+
+const app = new Component();
+const tpl = document.getElementById('tpl').content;
+const root = document.getElementById('root');
+app.__render = () => {
+  const vals = app.renderVals();
+  const kept = {};
+  root.querySelectorAll('input[name]').forEach((el) => { kept[el.name] = el.value; });
+  const focused = document.activeElement && document.activeElement.id;
+  const nodes = [];
+  tpl.childNodes.forEach((n) => nodes.push(...proc(n, vals)));
+  root.replaceChildren(...nodes);
+  root.querySelectorAll('input[name]').forEach((el) => { if (el.name in kept) el.value = kept[el.name]; });
+  if (focused && document.getElementById(focused)) document.getElementById(focused).focus();
+};
+app.__tick = () => {
+  const vals = app.renderVals();
+  root.querySelectorAll('[data-live="clock"]').forEach((el) => {
+    el.textContent = vals.clock;
+  });
+};
+app.__render();
+requestAnimationFrame(() => setTimeout(() => root.classList.add('settled'), 600));
+if (app.componentDidMount) app.componentDidMount();
+
+</script>
+</body>
+</html>

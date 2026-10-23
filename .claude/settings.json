@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(composer run:*)",
+      "Bash(composer test:*)",
+      "Bash(composer dump-autoload:*)",
+      "Bash(vendor/bin/pest:*)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(vendor/bin/phpstan:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)"
+    ],
+    "ask": [
+      "Bash(composer require:*)",
+      "Bash(composer remove:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.production)",
+      "Bash(git push --force:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/format.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
