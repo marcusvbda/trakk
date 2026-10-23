@@ -15,4 +15,9 @@ final class Toast
     {
         Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
     }
+
+    public static function error(string $message): void
+    {
+        Inertia::flash('toast', ['type' => 'error', 'message' => $message]);
+    }
 }

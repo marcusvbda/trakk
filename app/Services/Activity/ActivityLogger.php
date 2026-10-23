@@ -7,6 +7,7 @@ namespace App\Services\Activity;
 use App\Data\DayScore;
 use App\Enums\ActivitySource;
 use App\Enums\ActivityType;
+use App\Enums\ReminderChannel;
 use App\Enums\TaskStatus;
 use App\Models\Activity;
 use App\Models\Completion;
@@ -78,6 +79,32 @@ final class ActivityLogger
         return $this->record($reminder->user_id, ActivityType::ReminderPaused, $this->lower($reminder->label).' paused', $source, $reminder->goal_id);
     }
 
+    /** A read through MCP, so the top bar knows Claude is connected even when it only looked. */
+    public function mcpCall(User $user, string $tool): Activity
+    {
+        return $this->record($user->id, ActivityType::McpCall, $tool, ActivitySource::Mcp);
+    }
+
+    public function reminderSent(Reminder $reminder, ReminderChannel $channel): Activity
+    {
+        return $this->record($reminder->user_id, ActivityType::ReminderSent, $this->lower($reminder->label).' sent · '.$channel->value, ActivitySource::System, $reminder->goal_id);
+    }
+
+    public function reminderFailed(Reminder $reminder, ReminderChannel $channel, CarbonImmutable $slot, string $error): Activity
+    {
+        return $this->record($reminder->user_id, ActivityType::ReminderFailed, $this->lower($reminder->label).' failed · '.$channel->value, ActivitySource::System, $reminder->goal_id, meta: ['reminder_id' => $reminder->id, 'slot' => $slot->toIso8601String(), 'error' => $error]);
+    }
+
+    public function taskOverdue(Task $task): Activity
+    {
+        return $this->record($task->goal->user_id, ActivityType::TaskOverdue, $this->lower($task->title).' overdue', ActivitySource::System, $task->goal_id, $task->id, meta: ['due' => $task->due_date?->toDateString()]);
+    }
+
+    public function deadlineNear(Goal $goal, int $days): Activity
+    {
+        return $this->record($goal->user_id, ActivityType::DeadlineNear, $this->labels->goalName($goal).' due in '.$days.' days', ActivitySource::System, $goal->id, meta: ['days' => $days]);
+    }
+
     /** The one check-in of the day: pass the day's earlier check-in to update it instead of adding another. */
     public function checkIn(User $user, DayScore $score, ?Activity $existing = null, ActivitySource $source = ActivitySource::Web): Activity
     {
@@ -109,7 +136,10 @@ final class ActivityLogger
         return $this->record($task->goal->user_id, $type, $message, $source, $task->goal_id, $task->id, $points);
     }
 
-    private function record(int $userId, ActivityType $type, string $message, ActivitySource $source, ?int $goalId = null, ?int $taskId = null, ?int $points = null): Activity
+    /**
+     * @param  array<string, mixed>|null  $meta
+     */
+    private function record(int $userId, ActivityType $type, string $message, ActivitySource $source, ?int $goalId = null, ?int $taskId = null, ?int $points = null, ?array $meta = null): Activity
     {
         return Activity::query()->create([
             'user_id' => $userId,
@@ -119,6 +149,7 @@ final class ActivityLogger
             'message' => $this->withSource($message, $source),
             'points' => $points,
             'source' => $source,
+            'meta' => $meta,
             'occurred_at' => $this->clock->now(),
         ]);
     }

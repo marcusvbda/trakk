@@ -216,9 +216,38 @@ Build with existing tokens and components (`Panel`, `PanelHeader`, `TextField`, 
 ## MCP (local)
 
 - `TrakkServer` with `get-today`, `list-goals`, `complete-task`, `create-task`, `move-task`, `create-goal` (PRODUCT.md → MCP tools) plus `uncomplete-task` and `replan-tasks`. All call the same services as the web; each logs an activity with `source = mcp`.
+- Read tools so the owner can ask anything about his data: `get-goal` (detail with pace, tasks, checklist, recent history; by id, slug or fuzzy title), `get-stats` (points per day, week totals, streak, consistency and goals on pace for any date range), `list-tasks` (filters: goal, status, due before/after, overdue, recurring), `get-activity` (log for a date range, optionally by goal). All `#[IsReadOnly]`, all return compact text tables the model can quote.
 - `Mcp::local('trakk', TrakkServer::class)`; the user is the owner (`OWNER_EMAIL`).
 - `complete-task` accepts `task_id` or `title`; fuzzy match by `TaskLookupService` (case/accent-insensitive contains, then trigram similarity via `pg_trgm` if installed, else Levenshtein on today's tasks). Ambiguous → `Response::error` listing candidates with ids.
 - Register in Claude Code: `claude mcp add -s project trakk -- php artisan mcp:start trakk`. Document in README how to add it to Claude Desktop too.
+
+## Deploy (S5) and remote MCP (S6)
+
+The app stays single-user until the owner decides to launch. Do not build multi-tenancy, billing or sign-up; keep every query scoped by `user_id` (already the rule) so launching later is a feature, not a rewrite.
+
+### S5 — Deploy to the existing VPS
+
+The VPS (Hostinger KVM 1) already runs the Divercity WhatsApp bot in production (WAHA + n8n + Postgres). **Trakk must not put that bot at risk.**
+
+1. **Inspect first, read-only**, over SSH: OS, `docker ps`, compose projects, which process owns ports 80/443 (`ss -tlnp`), the reverse proxy in use (Traefik, Caddy, nginx, or none), its Docker networks, free RAM/disk (`free -h`, `df -h`). Report findings and the chosen layout before changing anything.
+2. **Never** stop, restart, update or edit existing containers, volumes, networks or proxy config of other projects without the owner's explicit OK for that exact command.
+3. **Layout:**
+   - If 80/443 are free: FrankenPHP serves HTTPS directly, as in `docs/DEPLOY.md`.
+   - If an existing reverse proxy owns 80/443 (expected): FrankenPHP serves plain HTTP on an internal port inside the `trakk` compose project, joins the proxy's Docker network, and the proxy routes `trakk.<domain>` with TLS (labels for Traefik, or one new site block for Caddy/nginx, shown to the owner before applying). Configure Laravel trusted proxies for that network. Update `docs/DEPLOY.md` and CLAUDE.md "Production target" to match.
+4. Own compose project `trakk` with its own Postgres container and volume (isolation from the bot's database). Memory limits so Trakk cannot starve the bot: app 384m, queue 192m, scheduler 128m, db 256m. If free RAM after that is under 500 MB, stop and tell the owner.
+5. Files: `docker/Dockerfile` (multi-stage, FrankenPHP PHP 8.4, classic mode), `docker/Caddyfile`, `compose.yaml`, `.dockerignore`, `docker/entrypoint.sh` (`migrate --force`, `optimize`).
+6. Server: repo cloned to `/opt/trakk`, `.env` created there (APP_KEY generated on the server, `APP_ENV=production`, `APP_DEBUG=false`, owner credentials, `TELEGRAM_BOT_TOKEN`, `MAIL_MAILER=log` until SMTP is chosen). First run seeds the owner and default reminders only, never `DemoSeeder`.
+7. CI/CD (`.github/workflows/`): on push run tests (Postgres service), `composer analyse`, `npm run types`; on `main` deploy over SSH (`git pull`, `docker compose build`, `docker compose up -d`). Secrets: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`.
+8. Backups: nightly `pg_dump` of the Trakk database via host cron into `/opt/trakk/backups`, keep 14.
+9. Done when `https://trakk.<domain>/login` works with the owner, the queue and scheduler containers are running, a reminder arrives in Telegram from production, the bot's containers show the same uptime as before the deploy, and M6 deploy boxes are ticked.
+
+### S6 — Remote MCP (after S4 and S5)
+
+- Install Passport, `Mcp::oauthRoutes()` inside a `throttle:10,1` group, `Mcp::web('/mcp', TrakkServer::class)->middleware(['auth:api', 'throttle:mcp'])`, the published authorization view restyled with the auth design (logo, panel, `authorize` accent button, `deny`).
+- Tools resolve the user from `$request->user()` for web and from the owner for local; one code path in a small resolver.
+- Feature tests: unauthenticated `/mcp` returns 401, an authorized token can call `get-today`.
+- The owner connects `https://trakk.<domain>/mcp` as a custom connector in Claude (web and mobile). ChatGPT is optional: its custom connectors need Developer Mode and may limit write tools by plan.
+- Done when Claude on the phone answers "how am I doing this week?" and completes a task by name.
 
 ## Read models and performance
 
@@ -239,6 +268,8 @@ Each session: start in plan mode, read this spec section + the docs it names, co
 | S2 | Dashboard real: `DashboardService`, top bar data, Today check/uncheck, reminder toggle, focus kanban moves, replan sheet, check-in sheet, suggestion, log, footer status, empty states. Browser screenshots still match. | M3 |
 | S3 | Goal detail real + all CRUD: `GoalDetailService`, goal sheet (create/edit/status/delete), task sheet + checklist, habit actions panel, reminder sheet, `/goals` list, command palette, settings fields. | M4, M5 (CRUD part) |
 | S4 | Delivery + MCP + cleanup: dispatch/scan commands, jobs, messages, Telegram client, `telegram:link`, test button, MCP server and tools with tests, mcp status in top bar, remove mocks, final full review. | M5 |
+| S5 | Deploy to the shared VPS (see Deploy section), CI/CD, backups. Can run before or after S4. | M6 (deploy) |
+| S6 | Remote MCP with Passport OAuth, connector in Claude web/mobile. After S4 and S5. | M6 (MCP) |
 
 ## Done when
 

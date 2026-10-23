@@ -42,7 +42,7 @@ final class PaceChartBuilder
             $this->progress->projection($goal, $today),
             $this->progress->currentPace($goal, $today),
             $this->progress->requiredPace($goal, $today),
-            $goal->isHabit() ? 'days/wk' : 'tasks/wk',
+            $this->progress->paceUnit($goal),
             $this->caption($goal, $today),
         );
     }

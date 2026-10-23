@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { DeleteAccountPanel } from '@/components/trakk/delete-account-panel';
 import { EmptyState } from '@/components/trakk/empty-state';
@@ -9,6 +9,7 @@ import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
 import { TrakkButton } from '@/components/ui/trakk-button';
 import { update } from '@/routes/profile';
+import { test } from '@/routes/telegram';
 
 export default function Profile({ timezones }: { timezones: string[] }) {
     const { auth } = usePage().props;
@@ -121,6 +122,24 @@ export default function Profile({ timezones }: { timezones: string[] }) {
                                 )
                             }
                         />
+                        <div className="flex items-center gap-2.5">
+                            <TrakkButton
+                                disabled={!isTelegramLinked}
+                                onClick={() =>
+                                    router.post(
+                                        test.url(),
+                                        {},
+                                        { preserveScroll: true },
+                                    )
+                                }
+                                data-test="telegram-test-button"
+                            >
+                                send test
+                            </TrakkButton>
+                            <span className="font-mono text-xs text-faint">
+                                sends to the saved chat id
+                            </span>
+                        </div>
                         {isTelegramLinked ? (
                             <EmptyState
                                 glyph="positive"

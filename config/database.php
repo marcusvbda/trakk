@@ -97,6 +97,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Laravel writes instants as naive UTC strings; the session must read them as UTC too, or every
+            // `timestamptz` shifts by the server's own offset (an hour off on a machine running Europe/Dublin).
+            'timezone' => env('APP_TIMEZONE', 'UTC'),
         ],
 
         'sqlsrv' => [

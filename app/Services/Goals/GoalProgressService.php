@@ -85,6 +85,12 @@ final class GoalProgressService
         return round($remainingUnits / ($remainingDays / 7), 1);
     }
 
+    /** What `currentPace` and `requiredPace` count per week. */
+    public function paceUnit(Goal $goal): string
+    {
+        return $goal->isHabit() ? 'days/wk' : 'tasks/wk';
+    }
+
     /** Distinct days with at least one completion between the start and `$day` (the due date when `null`). */
     public function hitDayCount(Goal $goal, ?CarbonImmutable $day = null): int
     {

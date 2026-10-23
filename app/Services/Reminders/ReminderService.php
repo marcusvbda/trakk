@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Services\Reminders;
 
 use App\Data\ReminderData;
+use App\Data\Reminders\DueReminder;
 use App\Enums\ActivitySource;
+use App\Enums\ActivityType;
 use App\Enums\ReminderChannel;
 use App\Enums\ReminderKind;
+use App\Models\Activity;
 use App\Models\Reminder;
 use App\Models\User;
 use App\Services\Activity\ActivityLogger;
+use Carbon\CarbonImmutable;
 use InvalidArgumentException;
 
 final class ReminderService
@@ -18,6 +22,8 @@ final class ReminderService
     private const string TIME_PATTERN = '/^([01]\d|2[0-3]):[0-5]\d$/';
 
     private const array EVERY_DAY = [1, 2, 3, 4, 5, 6, 7];
+
+    private const int GRACE_MINUTES = 10;
 
     public function __construct(private readonly ActivityLogger $activity) {}
 
@@ -57,6 +63,28 @@ final class ReminderService
         return $reminder;
     }
 
+    /**
+     * The active reminders whose slot has come in their owner's timezone and was not handled yet: not sent since the
+     * slot, and not failed for it. A slot more than ten minutes old is dropped, so a stopped worker does not send
+     * the morning brief in the afternoon.
+     *
+     * @return list<DueReminder>
+     */
+    public function due(CarbonImmutable $now): array
+    {
+        $due = [];
+
+        foreach (Reminder::query()->with('user')->where('is_active', true)->get() as $reminder) {
+            $slot = $this->currentSlot($reminder, $now->setTimezone($reminder->user->timezone));
+
+            if ($slot !== null && ! $this->isHandled($reminder, $slot)) {
+                $due[] = new DueReminder($reminder, $slot);
+            }
+        }
+
+        return $due;
+    }
+
     /** Created once, when the user has no reminders yet. */
     public function createDefaults(User $user): void
     {
@@ -67,6 +95,35 @@ final class ReminderService
         foreach ($this->defaults() as $defaults) {
             $this->create($user, $defaults);
         }
+    }
+
+    private function currentSlot(Reminder $reminder, CarbonImmutable $local): ?CarbonImmutable
+    {
+        $isScheduledToday = $reminder->isOnce()
+            ? $reminder->fire_on?->toDateString() === $local->toDateString()
+            : in_array($local->dayOfWeekIso, $reminder->days_of_week ?? [], true);
+
+        if (! $isScheduledToday) {
+            return null;
+        }
+
+        $slot = $local->setTimeFromTimeString($reminder->time);
+        $minutesLate = (int) floor($slot->diffInMinutes($local, false));
+
+        return $minutesLate >= 0 && $minutesLate <= self::GRACE_MINUTES ? $slot : null;
+    }
+
+    private function isHandled(Reminder $reminder, CarbonImmutable $slot): bool
+    {
+        if ($reminder->last_sent_at !== null && $reminder->last_sent_at->greaterThanOrEqualTo($slot)) {
+            return true;
+        }
+
+        return Activity::query()
+            ->where('type', ActivityType::ReminderFailed)
+            ->where('meta->reminder_id', $reminder->id)
+            ->where('meta->slot', $slot->toIso8601String())
+            ->exists();
     }
 
     /**
