@@ -43,11 +43,11 @@ cd trakk
 
 ## M2 — Rules (services + unit tests)
 
-- [ ] `Clock` (today in the user's timezone)
-- [ ] `GoalProgressService`: progress (habit/project), expected, delta, pace status, projection, current/required pace
-- [ ] `ScoreService`: day score, week score vs last week, 30-day series
-- [ ] `StreakService`: current streak and record
-- [ ] `ConsistencyService`: 12-week heat levels
+- [x] `Clock` (today in the user's timezone)
+- [x] `GoalProgressService`: progress (habit/project), expected, delta, pace status, projection, current/required pace
+- [x] `ScoreService`: day score, week score vs last week, 30-day series
+- [x] `StreakService`: current streak and record
+- [x] `ConsistencyService`: 12-week heat levels
 - [ ] `CompletionService`: complete / undo (idempotent per day)
 - [ ] `TaskService`: create, update, move between statuses (creates/deletes completion on done)
 - [ ] `GoalService`: create, update, change status

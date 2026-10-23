@@ -1,0 +1,71 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Enums\GoalType;
+use App\Enums\TaskStatus;
+use App\Models\Completion;
+use App\Models\Goal;
+use App\Models\Task;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
+
+/**
+ * In-memory models for calculator tests: nothing touches the database.
+ */
+function day(string $date): CarbonImmutable
+{
+    return CarbonImmutable::parse($date);
+}
+
+/**
+ * @param  array<string, int>  $pointsByDate
+ * @return Collection<int, Completion>
+ */
+function completionsWithPoints(array $pointsByDate): Collection
+{
+    return collect($pointsByDate)->map(fn (int $points, string $date): Completion => new Completion([
+        'completed_on' => $date,
+        'points' => $points,
+    ]))->values();
+}
+
+function projectGoal(string $start, string $due, int $done, int $total): Goal
+{
+    $goal = new Goal([
+        'type' => GoalType::Project,
+        'start_date' => $start,
+        'due_date' => $due,
+        'target_per_week' => null,
+    ]);
+
+    $tasks = collect(range(1, max($total, 1)))->take($total)->map(fn (int $index): Task => new Task([
+        'status' => $index <= $done ? TaskStatus::Done : TaskStatus::Todo,
+        'points' => 1,
+    ]));
+
+    return $goal->setRelation('tasks', $tasks->values());
+}
+
+/**
+ * @param  list<string>  $completionDates  one completion per date on the goal's single task
+ */
+function habitGoal(string $start, string $due, int $perWeek, array $completionDates, int $tasks = 1): Goal
+{
+    $goal = new Goal([
+        'type' => GoalType::Habit,
+        'start_date' => $start,
+        'due_date' => $due,
+        'target_per_week' => $perWeek,
+    ]);
+
+    $completions = collect($completionDates)->map(fn (string $date): Completion => new Completion([
+        'completed_on' => $date,
+        'points' => 1,
+    ]));
+
+    $taskModels = collect(range(1, $tasks))->map(fn (int $index): Task => (new Task(['status' => TaskStatus::Todo, 'days_of_week' => [1, 2, 3, 4, 5, 6, 7]]))
+        ->setRelation('completions', $index === 1 ? $completions : collect()));
+
+    return $goal->setRelation('tasks', $taskModels);
+}

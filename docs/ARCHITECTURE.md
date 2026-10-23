@@ -40,7 +40,7 @@ Controllers and MCP tools are adapters. They hold no rules. The same service met
 ```
 app/
 ├── Data/                     # readonly input/output objects (GoalData, TaskData, DayScore, GoalPace)
-├── Enums/                    # GoalType, GoalStatus, GoalColor, Priority, TaskStatus, PaceStatus, ReminderKind, ReminderChannel, ActivityType, ActivitySource, LogKind, ReplanTarget
+├── Enums/                    # GoalType, GoalStatus, GoalColor, Priority, TaskStatus, PaceStatus, ReminderKind, ReminderChannel, ActivityType, ActivitySource, LogKind, ReplanTarget, DayState, PointsTier
 ├── Http/
 │   ├── Controllers/          # thin, resourceful (DashboardController, GoalController, TaskController, TaskStatusController, CompletionController, ReminderController)
 │   ├── Requests/             # one FormRequest per write action, each exposes toData()
@@ -51,9 +51,10 @@ app/
 │   └── Tools/                # GetTodayTool, ListGoalsTool, CompleteTaskTool, CreateTaskTool, MoveTaskTool, CreateGoalTool
 ├── Models/                   # User, Goal, Task, ChecklistItem, Completion, Reminder, Activity
 ├── Policies/                 # GoalPolicy, TaskPolicy, ChecklistItemPolicy, ReminderPolicy (ownership)
+├── Support/                  # Clock (today in the user's timezone), Labels (server-side formatting)
 └── Services/
     ├── Goals/                # GoalService (create, update, archive), GoalProgressService (progress, expected, pace, projection)
-    ├── Tasks/                # TaskService (create, update, move), CompletionService (complete, undo)
+    ├── Tasks/                # TaskService (create, update, move, replan, checklist), CompletionService (complete, undo), OnTimeService (on time rate)
     ├── Scoring/              # ScoreService (day score, week score), StreakService, ConsistencyService (heatmap levels)
     ├── Dashboard/            # DashboardService (assembles the dashboard read model), GoalDetailService
     ├── Activity/             # ActivityLogger
@@ -112,8 +113,10 @@ Mutations (check action, move card, toggle reminder) use Inertia `router` / `<Fo
 
 ## Time
 
-- Every service that depends on "today" receives `CarbonImmutable $today` (resolved once per request from the user's timezone by a small `Clock` service). No `now()` deep inside rules.
+- Every service that depends on "today" receives `CarbonImmutable $today` (resolved once per request from the user's timezone by `App\Support\Clock`). No `now()` deep inside rules.
+- `$today` is the user's calendar date as midnight in the app timezone, the same shape `date` columns are cast to, so day differences are exact.
 - Dates are stored as `date` columns; timestamps are UTC.
+- Labels such as `dueLabel`, `timeLabel`, `dayLabel` and the top bar date line are formatted on the server by `App\Support\Labels`, never in React. The day of the year in the top bar line is 1-based (23 Oct 2026 is `day 296/365`).
 
 ## MCP
 
