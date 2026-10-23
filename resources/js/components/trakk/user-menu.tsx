@@ -1,11 +1,12 @@
 import { router, usePage } from '@inertiajs/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useInitials } from '@/hooks/use-initials';
+import { truncate } from '@/lib/format';
 import { logout } from '@/routes';
+
+const userNameLimit = 10;
 
 export function UserMenu() {
     const { auth } = usePage().props;
-    const getInitials = useInitials();
 
     function signOut() {
         router.flushAll();
@@ -16,14 +17,9 @@ export function UserMenu() {
         <DropdownMenu.Root>
             <DropdownMenu.Trigger
                 aria-label={`Account menu for ${auth.user.name}`}
-                className="inline-flex h-[34px] items-center gap-2 rounded-button border border-line-strong pr-2.5 pl-1.5 font-mono text-[11px] text-fg-2 transition-colors hover:border-muted hover:text-fg data-[state=open]:border-muted data-[state=open]:text-fg [div:empty+&]:ml-auto"
+                className="inline-flex h-[34px] items-center gap-2 rounded-button border border-line-strong px-2.5 font-mono text-[11px] text-fg-2 transition-colors hover:border-muted hover:text-fg data-[state=open]:border-muted data-[state=open]:text-fg [div:empty+&]:ml-auto"
             >
-                <span
-                    aria-hidden="true"
-                    className="inline-flex size-[22px] items-center justify-center rounded-chip bg-selected text-2xs text-accent"
-                >
-                    {getInitials(auth.user.name)}
-                </span>
+                <span>{truncate(auth.user.name, userNameLimit)}</span>
                 <span aria-hidden="true" className="text-xs text-muted">
                     ▾
                 </span>

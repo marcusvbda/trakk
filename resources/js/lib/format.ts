@@ -17,6 +17,10 @@ export function formatPace({ status, delta }: Pace): string {
     return `${paceLabel[status]} ${signed}%`;
 }
 
+export function truncate(text: string, limit: number): string {
+    return text.length > limit ? `${text.slice(0, limit)}...` : text;
+}
+
 export function percentOf(part: number, total: number): number {
     return total === 0 ? 0 : (part / total) * 100;
 }
