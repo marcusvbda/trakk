@@ -27,8 +27,16 @@ abstract class TrakkTool extends Tool
 {
     final public function handle(Request $request): Response
     {
-        $signedIn = $request->user();
-        $user = $signedIn instanceof User ? $signedIn : app(OwnerResolver::class)->owner();
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            // Only the local (console) server has no signed-in user; over HTTP a missing user must never fall back to the owner.
+            if (! app()->runningInConsole()) {
+                return Response::error('Not authenticated.');
+            }
+
+            $user = app(OwnerResolver::class)->owner();
+        }
 
         try {
             return $this->run($request, $user, app(Clock::class)->today($user));

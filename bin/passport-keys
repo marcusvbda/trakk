@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Runs on the VPS from the project directory, once: generates the Passport signing keys and appends them to .env.
+# The container filesystem is not persistent, so the keys live in the environment (PASSPORT_PRIVATE_KEY/PUBLIC_KEY).
+# Nothing is printed. Existing keys are never replaced: that would invalidate every connected client.
+set -euo pipefail
+umask 077
+
+cd "$(dirname "$0")/.."
+
+has_key() { grep -qE "^$1=\"?-----BEGIN" .env; }
+
+if has_key PASSPORT_PRIVATE_KEY && has_key PASSPORT_PUBLIC_KEY; then
+    echo "Passport keys already exist in .env; nothing to do."
+    exit 0
+fi
+
+if grep -qE '^PASSPORT_(PRIVATE|PUBLIC)_KEY=.+' .env && ! { has_key PASSPORT_PRIVATE_KEY && has_key PASSPORT_PUBLIC_KEY; }; then
+    echo "PASSPORT_PRIVATE_KEY / PASSPORT_PUBLIC_KEY in .env are not valid keys. Remove those lines and run this again." >&2
+    exit 1
+fi
+
+workdir="$(mktemp -d)"
+trap 'rm -rf "$workdir"' EXIT
+
+openssl genrsa -out "$workdir/private.pem" 4096 2>/dev/null
+openssl rsa -in "$workdir/private.pem" -pubout -out "$workdir/public.pem" 2>/dev/null
+
+one_line() { awk '{printf "%s\\n", $0}' "$1"; }
+
+# Keep the file valid when it does not end with a newline, then append both keys in one write.
+[ -z "$(tail -c1 .env)" ] || echo >> .env
+{
+    printf 'PASSPORT_PRIVATE_KEY="%s"\n' "$(one_line "$workdir/private.pem")"
+    printf 'PASSPORT_PUBLIC_KEY="%s"\n' "$(one_line "$workdir/public.pem")"
+} >> .env
+
+echo "Passport keys added to .env. Run bin/deploy so the app container reads them."

@@ -98,7 +98,7 @@ Secrets: `DEPLOY_VPS_HOST`, `DEPLOY_VPS_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_VPS_KNO
 The SSH address comes from the local `.env` (`DEPLOY_VPS_HOST`, `DEPLOY_VPS_USER`). The scripts read only those two lines.
 
 1. **`bin/bootstrap-vps`** (local). Installs Docker on the VPS only if missing, creates `/opt/trakk` and `/opt/trakk-backups` (owned by the SSH user, using `sudo` when not root; the VPS firewall already serves 80/443 for the n8n project, so nothing to open), generates the production `.env` from `.env.production.example` (random `APP_KEY` and `DB_PASSWORD`; an existing `.env` is never overwritten) and adds the backup cron to the existing crontab, replacing only its own `# trakk-backup` line. A non-root SSH user needs passwordless `sudo`. It is safe to run again.
-2. On the VPS, fill `OWNER_EMAIL`, `OWNER_PASSWORD`, `TELEGRAM_BOT_TOKEN` (and optionally `RESEND_API_KEY`) in `/opt/trakk/.env`. Email reminders stay in the log until `RESEND_API_KEY` is set **and** `MAIL_MAILER=resend` (the `resend/resend-php` package is installed). `MAIL_FROM_ADDRESS` must be a sender on a domain verified in Resend; without one use `onboarding@resend.dev`, which Resend delivers only to the Resend account's own email (`OWNER_EMAIL`). After editing `.env`, run `docker compose up -d --force-recreate app queue` so the containers read it. Double every `$` in a value (`$$`), because compose interpolates `.env`.
+2. On the VPS, fill `OWNER_EMAIL`, `OWNER_PASSWORD`, `TELEGRAM_BOT_TOKEN` (and, for email reminders, `MAIL_MAILER=smtp` plus `MAIL_PASSWORD`) in `/opt/trakk/.env`. Email reminders stay in the log until the mailer is set: production sends through Resend over **SMTP** (`MAIL_MAILER=smtp`, `MAIL_HOST=smtp.resend.com`, `MAIL_PORT=587`, `MAIL_USERNAME=resend`, `MAIL_PASSWORD=<Resend API key>`). `MAIL_FROM_ADDRESS` must be a sender on a domain verified in Resend; without one use `onboarding@resend.dev`, which Resend delivers only to the Resend account's own email (`OWNER_EMAIL`). The app caches its config when a container starts, so after editing `.env` run `docker compose up -d --force-recreate queue` (the queue worker sends the emails) and the other containers on the next deploy. Queue and scheduler have their healthcheck disabled: the base image's check targets the web server, which they do not run. Double every `$` in a value (`$$`), because compose interpolates `.env`.
 3. In the DNS panel for `mvbassalobre.com`, add an **A record** `trakk` pointing to the VPS IP. The domain's nameservers are Hostinger's (`ns1/ns2.dns-parking.com`), **not Vercel's**: Vercel cannot create the record.
 4. Connect the public Caddy to Trakk ("Public proxy" above), once the DNS record resolves.
 5. **`bin/deploy-secrets`** (local). Generates a throwaway ed25519 key pair, installs the public key in the VPS `authorized_keys` (prefixed with `restrict`), sends the secrets to the GitHub repo with `gh secret set`, records the host key (from your local `known_hosts` when present, otherwise `ssh-keyscan`, whose fingerprint it prints for you to check; the target repository is found from the project directory and printed) and deletes the private key from disk.
@@ -116,4 +116,25 @@ The SSH address comes from the local `.env` (`DEPLOY_VPS_HOST`, `DEPLOY_VPS_USER
 
 ## Remote MCP
 
-After Passport is installed, `https://trakk.mvbassalobre.com/mcp` is added in Claude as a custom connector. OAuth routes come from `Mcp::oauthRoutes()`; dynamic client registration is rate limited.
+`https://trakk.mvbassalobre.com/mcp` is the remote MCP server (Passport OAuth 2.1). The public Caddy forwards every path of the host, including `/.well-known/oauth-*`, `/oauth/*` and `/mcp`, so nothing extra is needed there.
+
+One-time setup after the first deploy that contains Passport:
+
+1. On the VPS, generate the signing keys once: `ssh <user>@<host> 'cd /opt/trakk && bin/passport-keys'`. It appends `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY` to `.env` without printing them, refuses placeholder values and never replaces existing keys (replacing them would disconnect every client).
+2. Roll the app so it reads them: `ssh <user>@<host> 'cd /opt/trakk && bin/deploy'` (zero-downtime; the image build is cached). Never `--force-recreate app`: that stops the only app container.
+3. Check discovery: `curl -s https://trakk.mvbassalobre.com/.well-known/oauth-authorization-server` must answer with JSON that lists the `registration_endpoint`.
+4. In Claude (web or mobile), Settings → Connectors → Add custom connector, URL `https://trakk.mvbassalobre.com/mcp`. Claude registers itself, sends you to Trakk, you sign in as the owner, check that the page names the right app and the redirect host (`claude.ai`), and press **authorize**.
+
+Safety rules of the remote server:
+
+- Dynamic client registration is public by specification, so `config/mcp.php` allows only these redirect domains: `claude.ai`, `claude.com`, `chatgpt.com`, `chat.openai.com` and localhost. **Never set `*`**: an attacker could register a client named "Claude" that redirects to their own site and trick the signed-in owner into approving it. Registration is throttled to 10/min.
+- Access tokens last 1 day and refresh tokens 30 days, so a connection has to be renewed monthly. `passport:purge` runs daily from the scheduler and removes revoked and expired tokens.
+- Only the authorization code flow is enabled (the device flow is off).
+- Claude can read goals and today's actions and complete, undo, move, create and replan, but nothing can be deleted. Everything it does is logged with the "claude" mark and lights the `mcp` pill in the top bar.
+
+To disconnect a client, revoke its tokens in Postgres (the refresh tokens too, otherwise the client can ask for a new access token):
+
+```sql
+UPDATE oauth_refresh_tokens SET revoked = true WHERE access_token_id IN (SELECT id FROM oauth_access_tokens WHERE client_id = '<client id>');
+UPDATE oauth_access_tokens SET revoked = true WHERE client_id = '<client id>';
+```

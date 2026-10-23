@@ -83,13 +83,14 @@ cd trakk
 
 - [x] FrankenPHP `Dockerfile` + `compose.yaml` + `Caddyfile` per `docs/DEPLOY.md`
 - [x] VPS deploy with HTTPS on a subdomain, scheduler and queue worker running
-- [ ] GitHub Action: test on push, deploy on `main`
+- [x] GitHub Action: test on push, deploy on `main`
 - [ ] Passport + `Mcp::oauthRoutes()` + `Mcp::web('/mcp', ...)`; connected as a custom connector in Claude (web and mobile)
 - [ ] PWA manifest and icons
 - [x] Daily Postgres backup
 
 ## Later
 
+- Open Trakk to more users (invite from the owner first). Needs: sign-up or invite flow; default reminders created with each new user (today only the seeder creates them); Telegram linking from the UI (today `LinkTelegramCommand` links the owner only); a verified Resend domain, because `onboarding@resend.dev` only delivers to the Resend account's own email; a "Connections" screen to see and revoke connected Claude/ChatGPT clients; per-user limits. Isolation by `user_id` is already in place and must be kept (`docs/ARCHITECTURE.md`, Security).
 - Mobile "Today" screen designed for the phone
 - Command bar "ask" (⌘K asks Claude; search and commands are done)
 - Inbound Telegram commands (check in by replying)

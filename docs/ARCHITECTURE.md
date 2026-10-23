@@ -8,7 +8,7 @@
 | Frontend | Inertia 3 + React 19 + TypeScript, from the official Laravel React starter kit |
 | Styling | Tailwind CSS 4 (CSS-first `@theme`, tokens in `docs/DESIGN.md`) |
 | Routing in TS | Laravel Wayfinder (typed route functions, ships with the starter kit) |
-| Auth | Laravel Fortify (starter kit), login and logout only. Passport added later for MCP OAuth. |
+| Auth | Laravel Fortify (starter kit), login and logout only. Laravel Passport issues the OAuth tokens of the remote MCP server (guard `api`). |
 | Database | PostgreSQL 17 |
 | Queue / cache / sessions | `database` driver (no Redis in the MVP) |
 | Scheduler | Laravel scheduler (`routes/console.php`). Locally `schedule:work` runs inside `composer run dev`; in production a `scheduler` container runs `schedule:work` |
@@ -103,6 +103,7 @@ activities      id, user_id→users, goal_id?→goals, task_id?→tasks, type, m
 - Enum columns are `string` in Postgres and cast to PHP backed enums.
 - Foreign keys cascade on delete (goal → tasks → checklist items, completions), except `goals.related_goal_id` and the activity links, which are set to null.
 - Indexes: `goals(user_id, status)`, `tasks(goal_id, status)`, `tasks(due_date)`, `completions(user_id, completed_on)`, `activities(user_id, occurred_at)`.
+- Passport adds `oauth_clients`, `oauth_auth_codes`, `oauth_access_tokens`, `oauth_refresh_tokens` and `oauth_device_codes` (create-only migrations, so they are safe to deploy while the previous release runs). Claude registers itself as an OAuth client (`oauth_clients`) and holds an access token for the owner. Tokens can be revoked from the database.
 - `completions.user_id` is denormalised on purpose: day and week scores are queried by user and date without joins.
 
 ## Read models
@@ -136,7 +137,7 @@ The tool count in the top bar and footer is `count(TrakkServer::TOOLS)`; the das
 
 - `routes/ai.php`:
   - `Mcp::local('trakk', TrakkServer::class)` for Claude Code / Desktop on this machine (milestone M5).
-  - `Mcp::web('/mcp', TrakkServer::class)->middleware(['auth:api', 'throttle:mcp'])` with `Mcp::oauthRoutes()` once Passport is installed (milestone M6), so claude.ai web and mobile can connect as a custom connector.
+  - `Mcp::oauthRoutes()` (throttled 30/min: dynamic client registration is public by specification) and `Mcp::web('/mcp', TrakkServer::class)->middleware(['auth:api', 'throttle:mcp'])`, so claude.ai web and mobile connect as a custom connector. The owner approves each client on `resources/views/mcp/authorize.blade.php` (Passport's authorization view, styled with the Trakk tokens). Registration only accepts redirect URIs on the domains listed in `config/mcp.php` (never `*`), tokens last 1 day (refresh 30 days) and the device flow is disabled. Over HTTP a tool without a signed-in user answers "Not authenticated" and never falls back to the owner. The Passport signing keys come from `PASSPORT_PRIVATE_KEY` / `PASSPORT_PUBLIC_KEY` in production (`bin/passport-keys`) and from `storage/oauth-*.key` locally (`composer setup` runs `passport:keys`).
 - Tools resolve the user from `$request->user()` (web) or the single owner account (local).
 - Tool descriptions are written for the model: say when to use the tool and what it returns.
 
@@ -154,6 +155,7 @@ The tool count in the top bar and footer is `count(TrakkServer::TOOLS)`; the das
 ## Security
 
 - Every query is scoped to the authenticated user; policies enforce ownership on route-model binding.
+- Multi-user later (owner decision): Trakk stays single-user today, but it will open to more people. Tenancy is row-level in one database (`user_id`), never a database per user. Therefore: always scope queries to the signed-in user (`ownedBy($user)`, `whereBelongsTo($user)`, a policy), never read "the owner" outside the local MCP server and the seeder, and give every new feature test a second user who must not see the first one's data.
 - Single-user app: no registration, password reset or email verification. The owner account is seeded from `OWNER_EMAIL` / `OWNER_PASSWORD`; to change the password use `php artisan tinker` or a small artisan command later.
 - Login is throttled by Fortify (5 attempts per minute per email + IP).
 - MCP web endpoint requires OAuth (Passport) and is rate limited; the dynamic client registration route is throttled.

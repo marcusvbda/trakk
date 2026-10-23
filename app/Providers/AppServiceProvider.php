@@ -6,13 +6,18 @@ namespace App\Providers;
 
 use App\Models\Goal;
 use Carbon\CarbonImmutable;
+use DateInterval;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\DevCommands;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Passport\Passport;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +26,8 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Only the authorization code flow is used; the device flow has no views and no clients.
+        Passport::$deviceCodeGrantEnabled = false;
     }
 
     /**
@@ -31,7 +37,17 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->registerRouteBindings();
+        $this->configureMcpAccess();
         $this->registerDevProcesses();
+    }
+
+    private function configureMcpAccess(): void
+    {
+        Passport::authorizationView('mcp.authorize');
+        Passport::tokensExpireIn(new DateInterval('P1D'));
+        Passport::refreshTokensExpireIn(new DateInterval('P30D'));
+
+        RateLimiter::for('mcp', fn (Request $request): Limit => Limit::perMinute(120)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
     }
 
     /**
