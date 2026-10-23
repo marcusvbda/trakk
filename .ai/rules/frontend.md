@@ -36,6 +36,7 @@ paths:
 - Owner rule: no component is ever blank. Every list, panel, chart, kanban column, sheet section and the command palette renders `EmptyState` (or its empty chart/grid structure with a caption) when it has no data, with the copy from `docs/specs/real-features.md` → Empty states. Never hide a panel for lack of data.
 - Function components, typed props, no `any`. Small and presentational: data in through props, events out through callbacks.
 - No business calculations in React. Pace, points, streaks, KPIs arrive computed. Formatting helpers live in `resources/js/lib/format.ts`.
+- Kanban cards move by native HTML5 drag and drop between columns, never with per-card arrow buttons (owner decision). No drag-and-drop package. The task sheet's status field is the keyboard and touch path.
 - Lists use stable keys from ids.
 - Accessible by default: real `<button>`, `<a>`, `<input>` + `<label>`; `aria-pressed` on toggles and checkable rows; `aria-label` on icon-only buttons; `role="img"` + `aria-label` on charts.
 

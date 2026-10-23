@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { EmptyState } from '@/components/trakk/empty-state';
 import { KanbanCard } from '@/components/trakk/kanban-card';
 import { TrakkButton } from '@/components/ui/trakk-button';
@@ -8,8 +9,6 @@ import type { KanbanColumnData, TaskStatus } from '@/types';
 type ColumnMeta = {
     label: string;
     dotClassName: string;
-    next: TaskStatus | null;
-    nextLabel: string;
     emptyText: string;
 };
 
@@ -17,22 +16,16 @@ const columnMeta: Record<TaskStatus, ColumnMeta> = {
     todo: {
         label: 'to do',
         dotClassName: 'text-muted',
-        next: 'doing',
-        nextLabel: 'doing',
         emptyText: 'no tasks',
     },
     doing: {
         label: 'doing',
         dotClassName: 'text-warning',
-        next: 'done',
-        nextLabel: 'done',
         emptyText: 'nothing in progress',
     },
     done: {
         label: 'done',
         dotClassName: 'text-accent',
-        next: null,
-        nextLabel: '',
         emptyText: 'nothing done yet',
     },
 };
@@ -52,6 +45,24 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
     const sheets = useSheets();
     const isFull = variant === 'full';
+    const [dragged, setDragged] = useState<{
+        id: number;
+        from: TaskStatus;
+    } | null>(null);
+    const [overStatus, setOverStatus] = useState<TaskStatus | null>(null);
+
+    function endDrag() {
+        setDragged(null);
+        setOverStatus(null);
+    }
+
+    function dropOn(to: TaskStatus) {
+        if (dragged && dragged.from !== to) {
+            onMove(dragged.id, dragged.from, to);
+        }
+
+        endDrag();
+    }
 
     return (
         <div className="overflow-x-auto">
@@ -64,17 +75,41 @@ export function KanbanBoard({
                 {columns.map((column) => {
                     const meta = columnMeta[column.status];
                     const hiddenCount = column.hiddenCount ?? 0;
-                    const next =
-                        column.status === 'done' && isFull ? 'todo' : meta.next;
-                    const nextLabel =
-                        column.status === 'done' && isFull
-                            ? 'to do'
-                            : meta.nextLabel;
+                    const isDropTarget =
+                        dragged !== null &&
+                        dragged.from !== column.status &&
+                        overStatus === column.status;
 
                     return (
                         <div
                             key={column.status}
-                            className="flex flex-col gap-1.5 rounded-[5px] border border-divider bg-sunken p-2"
+                            onDragOver={(event) => {
+                                if (!dragged) {
+                                    return;
+                                }
+
+                                event.preventDefault();
+                                setOverStatus(column.status);
+                            }}
+                            onDragLeave={(event) => {
+                                if (
+                                    !event.currentTarget.contains(
+                                        event.relatedTarget as Node | null,
+                                    )
+                                ) {
+                                    setOverStatus(null);
+                                }
+                            }}
+                            onDrop={(event) => {
+                                event.preventDefault();
+                                dropOn(column.status);
+                            }}
+                            className={cn(
+                                'flex flex-col gap-1.5 rounded-[5px] border bg-sunken p-2 transition-colors duration-200',
+                                isDropTarget
+                                    ? 'border-accent'
+                                    : 'border-divider',
+                            )}
                         >
                             <div className="flex justify-between px-0.5 pt-0.5 pb-1 font-mono text-xs tracking-widest text-fg-2 uppercase">
                                 <span>
@@ -113,20 +148,14 @@ export function KanbanBoard({
                                     card={card}
                                     status={column.status}
                                     isFull={isFull}
-                                    moveLabel={
-                                        next
-                                            ? column.status === 'done'
-                                                ? `Reopen "${card.title}"`
-                                                : `Move "${card.title}" to ${nextLabel}`
-                                            : null
+                                    isDragging={dragged?.id === card.id}
+                                    onDragStart={() =>
+                                        setDragged({
+                                            id: card.id,
+                                            from: column.status,
+                                        })
                                     }
-                                    moveGlyph={
-                                        column.status === 'done' ? '↺' : '→'
-                                    }
-                                    onMove={() =>
-                                        next &&
-                                        onMove(card.id, column.status, next)
-                                    }
+                                    onDragEnd={endDrag}
                                     onOpen={() =>
                                         sheets.open({
                                             kind: 'task',

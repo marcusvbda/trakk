@@ -1,4 +1,3 @@
-import { TrakkButton } from '@/components/ui/trakk-button';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { formatChecklist, percentOf } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -7,10 +6,10 @@ import type { KanbanCardData, TaskStatus } from '@/types';
 type KanbanCardProps = {
     card: KanbanCardData;
     status: TaskStatus;
-    moveLabel: string | null;
-    moveGlyph: string;
     isFull: boolean;
-    onMove: () => void;
+    isDragging: boolean;
+    onDragStart: () => void;
+    onDragEnd: () => void;
     onOpen: () => void;
 };
 
@@ -29,10 +28,10 @@ function dueText(card: KanbanCardData, isDone: boolean): string {
 export function KanbanCard({
     card,
     status,
-    moveLabel,
-    moveGlyph,
     isFull,
-    onMove,
+    isDragging,
+    onDragStart,
+    onDragEnd,
     onOpen,
 }: KanbanCardProps) {
     const isDone = status === 'done';
@@ -42,8 +41,16 @@ export function KanbanCard({
 
     return (
         <div
+            draggable
+            onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', String(card.id));
+                onDragStart();
+            }}
+            onDragEnd={onDragEnd}
             className={cn(
-                'flex animate-fade-in items-start gap-2 rounded-control border bg-raised py-2 pr-2 pl-2.5 transition-colors duration-200',
+                'flex animate-fade-in cursor-grab items-start gap-2 rounded-control border bg-raised py-2 pr-2.5 pl-2.5 transition-colors duration-200 active:cursor-grabbing',
+                isDragging && 'opacity-40',
                 showsLate
                     ? 'border-danger-line'
                     : 'border-line hover:border-line-hover',
@@ -94,15 +101,6 @@ export function KanbanCard({
                     />
                 )}
             </button>
-            {moveLabel && (
-                <TrakkButton
-                    size="icon"
-                    aria-label={moveLabel}
-                    onClick={onMove}
-                >
-                    {moveGlyph}
-                </TrakkButton>
-            )}
         </div>
     );
 }
