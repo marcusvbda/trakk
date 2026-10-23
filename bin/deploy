@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Runs on the VPS from the project directory (CI calls it over SSH after rsync). Zero-downtime rollout of the app container.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+compose() { docker compose "$@"; }
+
+health_of() {
+    docker inspect --format '{{if .State.Running}}{{if .State.Health}}{{.State.Health.Status}}{{else}}healthy{{end}}{{else}}exited{{end}}' "$1"
+}
+
+wait_until_healthy() {
+    local id="$1" status
+    for _ in $(seq 1 90); do
+        status="$(health_of "$id")"
+        [ "$status" = "healthy" ] && return 0
+        [ "$status" = "unhealthy" ] || [ "$status" = "exited" ] && return 1
+        sleep 2
+    done
+    return 1
+}
+
+docker network inspect trakk_edge >/dev/null 2>&1 || docker network create trakk_edge >/dev/null
+
+echo "==> Building image"
+nice -n 19 docker compose build app
+
+echo "==> Starting database"
+compose up -d --wait db
+
+# Leftovers of a failed rollout must not block this one: only healthy containers keep serving.
+old_ids=""
+for id in $(compose ps --all -q app); do
+    if [ "$(health_of "$id")" = "healthy" ]; then
+        old_ids="$old_ids $id"
+    else
+        docker rm -f "$id" >/dev/null
+    fi
+done
+old_count="$(printf '%s\n' $old_ids | grep -c . || true)"
+
+echo "==> Starting new app container next to $old_count running one(s)"
+compose up -d --no-deps --no-recreate --scale app=$((old_count + 1)) app
+
+new_ids=""
+for id in $(compose ps --all -q app); do
+    case " $old_ids " in *" $id "*) ;; *) new_ids="$new_ids $id" ;; esac
+done
+
+for id in $new_ids; do
+    if ! wait_until_healthy "$id"; then
+        echo "New app container is not healthy; keeping the current version." >&2
+        docker logs --tail 50 "$id" >&2 || true
+        docker rm -f $new_ids >/dev/null
+        exit 1
+    fi
+done
+
+if [ "$old_count" -gt 0 ]; then
+    echo "==> Retiring previous app container(s)"
+    for id in $old_ids; do
+        docker stop --time 30 "$id" >/dev/null
+        docker rm "$id" >/dev/null
+    done
+fi
+
+echo "==> Restarting queue worker and scheduler"
+compose up -d --no-deps queue scheduler
+
+# Label filter: other projects share this Docker daemon, so only Trakk's own dangling images are removed.
+docker image prune -f --filter label=app=trakk >/dev/null
+
+echo "==> Deployed"

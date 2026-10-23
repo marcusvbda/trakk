@@ -81,12 +81,12 @@ cd trakk
 
 ## M6 — Deploy and remote MCP
 
-- [ ] FrankenPHP `Dockerfile` + `compose.yaml` + `Caddyfile` per `docs/DEPLOY.md`
-- [ ] VPS deploy with HTTPS on a subdomain, scheduler and queue worker running
+- [x] FrankenPHP `Dockerfile` + `compose.yaml` + `Caddyfile` per `docs/DEPLOY.md`
+- [x] VPS deploy with HTTPS on a subdomain, scheduler and queue worker running
 - [ ] GitHub Action: test on push, deploy on `main`
 - [ ] Passport + `Mcp::oauthRoutes()` + `Mcp::web('/mcp', ...)`; connected as a custom connector in Claude (web and mobile)
 - [ ] PWA manifest and icons
-- [ ] Daily Postgres backup
+- [x] Daily Postgres backup
 
 ## Later
 

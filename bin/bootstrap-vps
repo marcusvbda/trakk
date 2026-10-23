@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# One-time VPS preparation, run from the owner's machine. Safe to repeat: nothing existing is overwritten.
+# The VPS is shared with other projects (they live in /opt too), so this only adds to it: it only creates /opt/trakk and
+# /opt/trakk-backups, never restarts Docker and never replaces the crontab. HTTPS is served by the VPS's existing public
+# Caddy (see docs/DEPLOY.md, "Public proxy"), so ports 80/443 are not touched here.
+set -euo pipefail
+
+source "$(dirname "$0")/lib/vps.sh"
+load_vps_target
+
+REMOTE_DIR="/opt/trakk"
+BACKUP_DIR="/opt/trakk-backups"
+EXAMPLE="$PROJECT_DIR/.env.production.example"
+
+echo "==> Checking $VPS_USER@$VPS_HOST"
+"${VPS_SSH[@]}" 'bash -s' <<'REMOTE'
+set -euo pipefail
+SUDO=""
+[ "$(id -u)" -eq 0 ] || SUDO="sudo"
+
+if ! command -v docker >/dev/null 2>&1; then
+    echo "Installing Docker"
+    curl -fsSL https://get.docker.com | $SUDO sh
+fi
+[ "$(id -u)" -eq 0 ] || $SUDO usermod -aG docker "$(id -un)"
+
+if ! $SUDO docker compose version >/dev/null 2>&1; then
+    echo "Docker Compose plugin is missing; install docker-compose-plugin and run this again." >&2
+    exit 1
+fi
+
+$SUDO mkdir -p /opt/trakk /opt/trakk-backups
+$SUDO chown "$(id -un):$(id -gn)" /opt/trakk /opt/trakk-backups
+chmod 700 /opt/trakk-backups
+REMOTE
+
+echo "==> Ensuring the production .env exists (secrets are generated here and never printed)"
+app_key="base64:$(openssl rand -base64 32)"
+db_password="$(openssl rand -hex 24)"
+sed -e "s|^APP_KEY=.*|APP_KEY=${app_key}|" \
+    -e "s|^DB_PASSWORD=.*|DB_PASSWORD=${db_password}|" \
+    "$EXAMPLE" | "${VPS_SSH[@]}" "[ -e $REMOTE_DIR/.env ] || { umask 077; cat > $REMOTE_DIR/.env; }"
+
+echo "==> Installing nightly backup cron (03:00 server time), keeping every other crontab entry"
+"${VPS_SSH[@]}" 'bash -s' <<'REMOTE'
+set -euo pipefail
+entry='0 3 * * * cd /opt/trakk && bin/backup-db >> /opt/trakk-backups/backup.log 2>&1 # trakk-backup'
+current="$(crontab -l 2>&1)" || case "$current" in
+    *"no crontab"*) current="" ;;
+    *) echo "$current" >&2; exit 1 ;;
+esac
+{ printf '%s\n' "$current" | grep -vF '# trakk-backup' || true; echo "$entry"; } | crontab -
+REMOTE
+
+cat <<MSG
+
+Done. Next steps:
+  1. Edit $REMOTE_DIR/.env on the VPS: OWNER_EMAIL, OWNER_PASSWORD, TELEGRAM_BOT_TOKEN (RESEND_API_KEY is optional).
+  2. In the DNS panel of mvbassalobre.com (Hostinger nameservers, not Vercel) add an A record: trakk -> $VPS_HOST
+  3. Connect the VPS's public Caddy to Trakk (docs/DEPLOY.md, "Public proxy").
+  4. Run bin/deploy-secrets, then push to main.
+  5. After the first deploy, once: ssh $VPS_USER@$VPS_HOST 'cd $REMOTE_DIR && docker compose exec app php artisan db:seed --force'
+MSG

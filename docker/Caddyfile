@@ -1,0 +1,16 @@
+{
+	frankenphp
+	auto_https off
+	admin off
+}
+
+# Plain HTTP on 8080: only the VPS's public Caddy reaches this port (over the trakk_edge network), and it terminates TLS.
+:8080 {
+	root * /app/public
+	encode zstd br gzip
+
+	@hashedAssets path /build/assets/*
+	header @hashedAssets Cache-Control "public, max-age=31536000, immutable"
+
+	php_server
+}

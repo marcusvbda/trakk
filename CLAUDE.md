@@ -47,8 +47,10 @@ If a script above does not exist yet, add it to `composer.json` / `package.json`
 
 - Production serves the app with FrankenPHP (Caddy built in) in **classic mode**: one fresh PHP request per hit, like PHP-FPM. Laravel Octane is not installed, so no worker-mode state rules apply. Do not add Octane without asking.
 - Write code that does not depend on the web server: no `$_SERVER` server-name checks, no nginx/Apache rewrites, no PHP-FPM-only functions (`fastcgi_finish_request`). Trust the framework (`Request`, `url()`, `asset()`).
-- The document root is `public/`. HTTPS, compression and static assets are handled by FrankenPHP, so the app needs no proxy configuration.
-- Queue worker and scheduler run as separate containers of the same image in production (`docs/DEPLOY.md`), mirroring the processes in `composer run dev`.
+- The document root is `public/`. Compression and static assets are handled by FrankenPHP over plain HTTP on port 8080, which is never published. HTTPS is terminated by the VPS's public Caddy (owned by the `wpp-automation-n8n` project, which Trakk joins through the `trakk_edge` network), so the app trusts the proxy (`trustProxies(at: '*')` in `bootstrap/app.php`). Never publish port 8080 and never add another way into the app container. Never edit tracked files of the other project: its deploy aborts on local changes.
+- Queue worker and scheduler run as separate containers of the same image in production, mirroring the processes in `composer run dev`.
+- Deploys are zero-downtime: every push to `main` runs the tests, then `bin/deploy` rolls the app container on the VPS (`docs/DEPLOY.md`). Because the old version keeps serving while migrations run, migrations must stay compatible with the previous release (expand/contract).
+- The VPS is shared with other projects. Deploy scripts and compose files must only touch Trakk's own containers, volumes, directory (`/opt/trakk`, backups in `/opt/trakk-backups`) and crontab entries: fixed compose project name `trakk`, no `docker system prune`, no restarting the Docker daemon.
 
 ## Architecture in one screen
 

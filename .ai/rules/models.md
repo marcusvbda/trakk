@@ -27,6 +27,7 @@ paths:
 - Postgres types: `jsonb` for arrays, `date` for calendar dates, `timestampTz` for instants, `string` for enums (no native Postgres enums).
 - Foreign keys with `constrained()->cascadeOnDelete()`; indexes from `docs/ARCHITECTURE.md`.
 - Keep `docs/ARCHITECTURE.md` "Data model" in sync with every migration.
+- Deploys are zero-downtime, so the previous release keeps running while a migration runs. Never drop, rename or tighten a column the running code still uses in the same release: add the new shape first (expand), ship the code that uses it, and remove the old one in a later release (contract).
 
 ## Seeders
 

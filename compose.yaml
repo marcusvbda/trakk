@@ -1,0 +1,79 @@
+# Fixed project name: the VPS hosts other projects, so containers, network and volumes must never share a prefix with them.
+name: trakk
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-app: &app
+  image: trakk:latest
+  env_file: .env
+  restart: unless-stopped
+  pull_policy: never
+  logging: *logging
+
+services:
+  app:
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: production
+    environment:
+      RUN_MIGRATIONS: "true"
+    networks:
+      default:
+      edge:
+        aliases:
+          - trakk-app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://localhost:8080/up') === false ? 1 : 0);"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  queue:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--tries=3", "--max-time=3600"]
+    stop_grace_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  # Shared with the VPS's public Caddy, which reaches the app as `trakk-app:8080`. Created by bin/deploy.
+  edge:
+    name: trakk_edge
+    external: true
+
+volumes:
+  pgdata:

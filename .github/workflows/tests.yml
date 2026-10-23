@@ -13,6 +13,21 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: postgres
+          POSTGRES_DB: trakk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -22,7 +37,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           tools: composer:v2
           coverage: none
 
@@ -31,8 +46,62 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Create test database
+        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE trakk_test'
+
       - name: Setup Application
         run: composer setup
 
+      - name: Install browser for the Browser suite
+        run: npx playwright install --with-deps chromium
+
       - name: Run CI Checks
         run: composer ci:check
+
+  deploy:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+
+    permissions:
+      contents: read
+
+    env:
+      VPS_HOST: ${{ secrets.DEPLOY_VPS_HOST }}
+      VPS_USER: ${{ secrets.DEPLOY_VPS_USER }}
+      VPS_PORT: ${{ secrets.DEPLOY_VPS_PORT || '22' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Sync code to the VPS
+        run: |
+          rsync -az --delete --inplace \
+            --exclude '/.git' \
+            --exclude '/node_modules' \
+            --exclude '/vendor' \
+            --exclude '/.env' \
+            --exclude '/storage' \
+            --exclude '/public/build' \
+            -e "ssh -i ~/.ssh/deploy_key -p $VPS_PORT -o ServerAliveInterval=30" \
+            ./ "$VPS_USER@$VPS_HOST:/opt/trakk/"
+
+      - name: Deploy
+        run: ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" -o ServerAliveInterval=30 "$VPS_USER@$VPS_HOST" 'cd /opt/trakk && bin/deploy'

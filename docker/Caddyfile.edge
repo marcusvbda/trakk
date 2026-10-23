@@ -1,0 +1,15 @@
+trakk.mvbassalobre.com {
+	reverse_proxy {
+		# Re-resolve the alias so app containers that join or leave during a deploy are picked up.
+		dynamic a {
+			name trakk-app
+			port 8080
+			refresh 5s
+			resolvers 127.0.0.11
+		}
+
+		# Retry on another container while a replaced one is shutting down.
+		lb_try_duration 5s
+		lb_try_interval 250ms
+	}
+}

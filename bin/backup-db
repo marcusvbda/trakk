@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Nightly Postgres dump, run from cron on the VPS. Keeps the last 14 files.
+set -euo pipefail
+umask 077
+
+cd "$(dirname "$0")/.."
+
+backup_dir="${BACKUP_DIR:-/opt/trakk-backups}"
+keep=14
+
+mkdir -p "$backup_dir"
+file="$backup_dir/trakk-$(date -u +%Y%m%d-%H%M%S).sql.gz"
+trap 'rm -f "$file.partial"' EXIT
+
+docker compose exec -T db sh -c 'pg_dump --clean --if-exists --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB"' | gzip > "$file.partial"
+mv "$file.partial" "$file"
+
+ls -1t "$backup_dir"/trakk-*.sql.gz | tail -n +$((keep + 1)) | xargs -r rm --
+echo "Backup written to $file"
