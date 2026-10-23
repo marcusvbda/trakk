@@ -29,7 +29,7 @@ cd trakk
 - [x] `Date::use(CarbonImmutable::class)`, `Model::preventLazyLoading()`, `Model::shouldBeStrict()` (non-prod) in `AppServiceProvider`
 - [x] Auth reduced to login + logout: in `config/fortify.php` keep no features (remove registration, reset passwords, email verification, two-factor); delete the starter-kit pages, routes and tests for those flows
 - [x] Owner account created by `DatabaseSeeder` from `.env` (`OWNER_EMAIL`, `OWNER_PASSWORD`)
-- [ ] Sign-in page rebuilt with `AuthLayout`, `LogoMark`, `TextField` to match `docs/design/reference/login-*.png`; feature tests: logs in, rejects wrong password, throttles
+- [x] Sign-in page rebuilt with `AuthLayout`, `LogoMark`, `TextField` to match `docs/design/reference/login-*.png`; feature tests: logs in, rejects wrong password, throttles
 - [x] First commit: `chore: scaffold Laravel 13 React starter kit`
 
 ## M1 — Domain and data
@@ -59,6 +59,17 @@ cd trakk
 - [ ] Dashboard page identical to `docs/design/reference/dashboard-desktop.png` and `dashboard-mobile.png`
 - [ ] Check/uncheck today's actions (optimistic) with feature tests
 - [ ] Goal filter tabs
+
+## M3a — Mocked screens
+
+Login, dashboard and goal detail built against PHP mocks (`app/Support/Mocks/DashboardMock.php`, `GoalDetailMock.php`) shaped like the future Resources. Interactions are local React state only. M3 and M4 replace the mocks with services and real mutations; the sums and counts in `use-dashboard-state.ts` and `use-goal-board-state.ts` move to the server then.
+
+- [x] `AuthLayout`, `LogoMark`, `TextField` and the sign-in screen (real Fortify login, error and throttle states)
+- [x] UI primitives (`Panel`, `PanelHeader`, `Chip`, `ProgressBar`, `TrakkButton`, `TrakkCheckbox`, `TrakkToggle`) and `TrakkLayout`
+- [x] Dashboard (`/`) with all panels, goal filters, local check / kanban move / reminder toggles
+- [x] Goal detail (`/goals/{goal}`) with pace chart, board moves and history
+- [x] Typed props in `resources/js/types/`
+- [x] Feature tests (guest redirect, owner renders the right component) and `tests/Browser/ScreensTest.php` screenshots at 1440px and 390px
 
 ## M4 — Goals and boards
 
