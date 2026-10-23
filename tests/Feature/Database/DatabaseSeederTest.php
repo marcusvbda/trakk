@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
 
 describe('DatabaseSeeder', function () {
     it('creates the owner who can log in with the configured credentials', function () {

@@ -36,9 +36,9 @@ cd trakk
 
 ## M1 — Domain and data
 
-- [ ] Enums: `GoalType`, `GoalStatus`, `Priority`, `TaskStatus`, `PaceStatus`, `ReminderKind`, `ReminderChannel`, `ActivityType`
-- [ ] Migrations + models + factories (with states) for goals, tasks, checklist_items, completions, reminders, activities; user columns `timezone`, `daily_points_target`, `telegram_chat_id`
-- [ ] Policies for ownership
+- [x] Enums: `GoalType`, `GoalStatus`, `GoalColor`, `Priority`, `TaskStatus`, `PaceStatus`, `ReminderKind`, `ReminderChannel`, `ActivityType`, `ActivitySource`, `LogKind`, `ReplanTarget`
+- [x] Migrations + models + factories (with states) for goals, tasks, checklist_items, completions, reminders, activities; user columns `timezone`, `daily_points_target`, `telegram_chat_id`
+- [x] Policies for ownership
 - [ ] `DemoSeeder` mirroring the prototype data
 
 ## M2 — Rules (services + unit tests)

@@ -29,6 +29,9 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'timezone' => 'Europe/Dublin',
+            'daily_points_target' => 14,
+            'telegram_chat_id' => null,
         ];
     }
 }

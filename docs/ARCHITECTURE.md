@@ -40,7 +40,7 @@ Controllers and MCP tools are adapters. They hold no rules. The same service met
 ```
 app/
 ├── Data/                     # readonly input/output objects (GoalData, TaskData, DayScore, GoalPace)
-├── Enums/                    # GoalType, GoalStatus, Priority, TaskStatus, PaceStatus, ReminderKind, ReminderChannel, ActivityType
+├── Enums/                    # GoalType, GoalStatus, GoalColor, Priority, TaskStatus, PaceStatus, ReminderKind, ReminderChannel, ActivityType, ActivitySource, LogKind, ReplanTarget
 ├── Http/
 │   ├── Controllers/          # thin, resourceful (DashboardController, GoalController, TaskController, TaskStatusController, CompletionController, ReminderController)
 │   ├── Requests/             # one FormRequest per write action, each exposes toData()
@@ -50,7 +50,7 @@ app/
 │   ├── Servers/TrakkServer.php
 │   └── Tools/                # GetTodayTool, ListGoalsTool, CompleteTaskTool, CreateTaskTool, MoveTaskTool, CreateGoalTool
 ├── Models/                   # User, Goal, Task, ChecklistItem, Completion, Reminder, Activity
-├── Policies/                 # GoalPolicy, TaskPolicy, ReminderPolicy (ownership)
+├── Policies/                 # GoalPolicy, TaskPolicy, ChecklistItemPolicy, ReminderPolicy (ownership)
 └── Services/
     ├── Goals/                # GoalService (create, update, archive), GoalProgressService (progress, expected, pace, projection)
     ├── Tasks/                # TaskService (create, update, move), CompletionService (complete, undo)
@@ -84,19 +84,24 @@ resources/js/
 
 ```
 users           id, name, email, password, timezone ('Europe/Dublin'), daily_points_target (14), telegram_chat_id?, timestamps
-goals           id, user_id→users, title, icon?, description?, done_criteria?, type, color, priority, start_date, due_date,
-                target_per_week?, area?, status, position, timestamps
+goals           id, user_id→users, related_goal_id?→goals (null on delete), title, slug, icon?, description?, done_criteria?,
+                type, color, priority, start_date, due_date, target_per_week?, area?, status, position, timestamps
+                unique(user_id, slug)
 tasks           id, goal_id→goals, title, notes?, status ('todo'), points (1..5), due_date?, scheduled_time?,
                 days_of_week (jsonb, ISO 1..7)?, tag?, position, completed_at?, timestamps
 checklist_items id, task_id→tasks, title, is_done, position, timestamps
 completions     id, task_id→tasks, user_id→users, completed_on (date), points, timestamps        unique(task_id, completed_on)
-reminders       id, user_id→users, goal_id?→goals, kind, label, time, days_of_week (jsonb), channel, is_active, last_sent_at?, timestamps
-activities      id, user_id→users, goal_id?, task_id?, type, message, points?, occurred_at, timestamps
+reminders       id, user_id→users, goal_id?→goals, kind, label, time, days_of_week (jsonb)?, fire_on (date)?,
+                channels (jsonb, non-empty), is_active, last_sent_at?, last_error?, timestamps
+activities      id, user_id→users, goal_id?→goals, task_id?→tasks, type, message, points?, source ('web'), meta (jsonb)?,
+                occurred_at, timestamps
 ```
 
+- A recurring reminder has `days_of_week`; a one-off reminder has `fire_on` and a null `days_of_week`.
+- `activities.source` is `web`, `mcp` or `system`. `activities.goal_id` and `task_id` are set to null when the goal or task is deleted, so the log survives.
 - Enum columns are `string` in Postgres and cast to PHP backed enums.
-- Foreign keys cascade on delete (goal → tasks → checklist items, completions).
-- Indexes: `tasks(goal_id, status)`, `tasks(due_date)`, `completions(user_id, completed_on)`, `activities(user_id, occurred_at)`.
+- Foreign keys cascade on delete (goal → tasks → checklist items, completions), except `goals.related_goal_id` and the activity links, which are set to null.
+- Indexes: `goals(user_id, status)`, `tasks(goal_id, status)`, `tasks(due_date)`, `completions(user_id, completed_on)`, `activities(user_id, occurred_at)`.
 - `completions.user_id` is denormalised on purpose: day and week scores are queried by user and date without joins.
 
 ## Read models
