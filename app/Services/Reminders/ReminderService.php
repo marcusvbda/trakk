@@ -15,6 +15,8 @@ use InvalidArgumentException;
 
 final class ReminderService
 {
+    private const string TIME_PATTERN = '/^([01]\d|2[0-3]):[0-5]\d$/';
+
     private const array EVERY_DAY = [1, 2, 3, 4, 5, 6, 7];
 
     public function __construct(private readonly ActivityLogger $activity) {}
@@ -86,7 +88,7 @@ final class ReminderService
      */
     private function attributes(ReminderData $data): array
     {
-        $days = $data->daysOfWeek === null ? null : array_values(array_unique($data->daysOfWeek));
+        $days = $data->daysOfWeek === null || $data->daysOfWeek === [] ? null : array_values(array_unique($data->daysOfWeek));
 
         if ($days !== null) {
             sort($days);
@@ -106,6 +108,10 @@ final class ReminderService
 
     private function assertValid(User $user, ReminderData $data): void
     {
+        if (preg_match(self::TIME_PATTERN, $data->time) !== 1) {
+            throw new InvalidArgumentException('The time must be HH:MM, from 00:00 to 23:59.');
+        }
+
         if ($data->channels === []) {
             throw new InvalidArgumentException('A reminder needs at least one channel.');
         }

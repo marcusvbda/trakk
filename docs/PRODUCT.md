@@ -56,7 +56,7 @@ Out (later):
 
 ## Business rules
 
-All rules below are implemented in services and covered by unit tests. Dates use the owner's timezone (`users.timezone`, default `Europe/Dublin`).
+The rules below live in services and are covered by tests. The dashboard assembly (Today list, KPI cards, suggestion, overdue scan) uses them and arrives with the read models. Dates use the owner's timezone (`users.timezone`, default `Europe/Dublin`).
 
 ### Goal fields
 
@@ -93,8 +93,9 @@ All rules below are implemented in services and covered by unit tests. Dates use
 ### Tasks
 
 - Status: `todo`, `doing`, `done`. Recurring tasks only use done-per-day via completions; their `status` stays `todo`.
-- Recurrence: `days_of_week` (ISO 1–7). Null means one-off. Habit goals hold recurring tasks (at least one weekday); project goals hold one-off tasks.
-- Points are 1–5. A goal's type cannot change once it has tasks.
+- Recurrence: `days_of_week` (ISO 1–7). Null means one-off. Habit goals hold recurring actions and may also hold one-off tasks with a due date (a mock test, a weigh-in); project goals hold one-off tasks only.
+- Points are 1–5. A goal's type cannot change once it has tasks, and a task cannot change between recurring and one-off. A task in a habit goal has weekdays or, as a one-off, a due date.
+- Deleting a task or goal also deletes its completions, so its points leave the history (streak, charts, week totals); the activity log is kept.
 - Checklist items are added at the end, can be renamed, ticked and deleted, and never score.
 - Overdue: a one-off task not `done` with `due_date` before today. Shown with how many days late (`−3d`).
 - "Due today": one-off task not done with `due_date` = today; shown in Today with `DUE TODAY`.

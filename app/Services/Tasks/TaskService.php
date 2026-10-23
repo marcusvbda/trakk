@@ -58,6 +58,10 @@ final class TaskService
         $task->loadMissing('goal');
         $this->assertValid($task->goal, $data);
 
+        if ($task->isRecurring() !== ($data->daysOfWeek !== null)) {
+            throw new DomainException('A task cannot change between recurring and one-off.');
+        }
+
         return DB::transaction(function () use ($task, $data, $today, $source): Task {
             $task->update($this->attributes($data));
 
@@ -222,8 +226,12 @@ final class TaskService
             throw new InvalidArgumentException('Project tasks are one-off and take no weekdays.');
         }
 
-        if ($goal->isHabit() && ($data->daysOfWeek === null || $data->daysOfWeek === [])) {
-            throw new InvalidArgumentException('Habit actions need at least one weekday.');
+        if ($data->daysOfWeek === []) {
+            throw new InvalidArgumentException('Pick at least one weekday, or none for a one-off task.');
+        }
+
+        if ($goal->isHabit() && $data->daysOfWeek === null && $data->dueDate === null) {
+            throw new InvalidArgumentException('A habit goal task needs weekdays or, as a one-off, a due date.');
         }
 
         foreach ($data->daysOfWeek ?? [] as $day) {

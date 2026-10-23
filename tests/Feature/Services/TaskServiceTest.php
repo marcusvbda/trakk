@@ -47,13 +47,21 @@ describe('create', function () {
         expect($task->days_of_week)->toBe([1, 3, 5]);
     });
 
+    it('lets a habit goal hold a one-off task with a due date', function () {
+        $task = $this->service->create($this->habit, new TaskData('Full mock test', 4, dueDate: day('2026-10-26')));
+
+        expect($task->isRecurring())->toBeFalse()
+            ->and($task->due_date->toDateString())->toBe('2026-10-26');
+    });
+
     it('rejects a task that does not fit the goal type or the rules', function (string $type, TaskData $data) {
         $goal = $type === 'habit' ? $this->habit : $this->project;
 
         $this->service->create($goal, $data);
     })->throws(InvalidArgumentException::class)->with([
         'weekdays on a project' => ['project', new TaskData('A', 1, daysOfWeek: [1])],
-        'habit without weekdays' => ['habit', new TaskData('A', 1)],
+        'empty weekdays' => ['habit', new TaskData('A', 1, daysOfWeek: [])],
+        'habit task with neither weekdays nor a due date' => ['habit', new TaskData('A', 1)],
         'weekday out of range' => ['habit', new TaskData('A', 1, daysOfWeek: [8])],
         'zero points' => ['project', new TaskData('A', 0)],
         'six points' => ['project', new TaskData('A', 6)],
@@ -130,6 +138,20 @@ describe('update', function () {
 
         expect(Completion::query()->count())->toBe(1);
     });
+});
+
+describe('update', function () {
+    it('refuses to turn a recurring action into a one-off task or the reverse', function (bool $recurring) {
+        $task = $recurring
+            ? Task::factory()->for($this->habit)->recurring()->create()
+            : Task::factory()->for($this->habit)->dueOn(day('2026-10-26'))->create();
+        $data = $recurring ? new TaskData('X', 2, dueDate: day('2026-10-26')) : new TaskData('X', 2, daysOfWeek: [1]);
+
+        $this->service->update($task, $data, $this->today);
+    })->throws(DomainException::class)->with([
+        'recurring to one-off' => [true],
+        'one-off to recurring' => [false],
+    ]);
 });
 
 describe('replan', function () {

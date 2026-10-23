@@ -51,15 +51,11 @@ final class CompletionService
     {
         $task->loadMissing('goal');
 
-        $completion = $task->isRecurring()
-            ? $task->completions()->where('completed_on', $today->toDateString())->first()
-            : $task->completions()->first();
+        $attributes = ['user_id' => $task->goal->user_id, 'points' => $task->points];
 
-        $completion ??= $task->completions()->create([
-            'user_id' => $task->goal->user_id,
-            'completed_on' => $today,
-            'points' => $task->points,
-        ]);
+        $completion = $task->isRecurring()
+            ? $task->completions()->firstOrCreate(['completed_on' => $today->toDateString()], $attributes)
+            : $task->completions()->first() ?? $task->completions()->create([...$attributes, 'completed_on' => $today]);
 
         if (! $task->isRecurring() && $task->status !== TaskStatus::Done) {
             $task->update(['status' => TaskStatus::Done, 'completed_at' => $this->clock->now()]);

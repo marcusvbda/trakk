@@ -30,7 +30,7 @@ Every item below is a checklist entry for the sessions. "Source" is what produce
 
 | Element | Source / action |
 | --- | --- |
-| Date line (`fri, 23 oct 2026 · wk 43 · day 295/365`) and year progress | `TopBarData` built by a small service from `Clock` in the user's timezone, shared in `HandleInertiaRequests` (replaces `TopBarMock`). |
+| Date line (`fri, 23 oct 2026 · wk 43 · day 296/365`) and year progress | `TopBarData` built by a small service from `Clock` in the user's timezone, shared in `HandleInertiaRequests` (replaces `TopBarMock`). |
 | Live clock | Client-side (`use-clock`), already real. |
 | Command bar ⌘K | Opens the command palette (see New surfaces). |
 | `mcp connected` dot | `mcp · N tools`: N = count of tools on `TrakkServer`. Dot pulses (accent) if an MCP call was logged in the last 24h, otherwise `dim` with label `mcp idle`. |

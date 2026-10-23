@@ -39,7 +39,7 @@ cd trakk
 - [x] Enums: `GoalType`, `GoalStatus`, `GoalColor`, `Priority`, `TaskStatus`, `PaceStatus`, `ReminderKind`, `ReminderChannel`, `ActivityType`, `ActivitySource`, `LogKind`, `ReplanTarget`
 - [x] Migrations + models + factories (with states) for goals, tasks, checklist_items, completions, reminders, activities; user columns `timezone`, `daily_points_target`, `telegram_chat_id`
 - [x] Policies for ownership
-- [ ] `DemoSeeder` mirroring the prototype data
+- [x] `DemoSeeder` mirroring the prototype data, built relative to today; `DatabaseSeeder` seeds the owner and the default reminders
 
 ## M2 — Rules (services + unit tests)
 

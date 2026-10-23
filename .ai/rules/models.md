@@ -30,5 +30,5 @@ paths:
 
 ## Seeders
 
-- `DatabaseSeeder` creates the owner account and calls `DemoSeeder`.
-- `DemoSeeder` reproduces the prototype data (6 goals, today's 8 actions, the nomad visa board with 20 tasks, 30 days of completions, 5 reminders) so the UI can be compared with `docs/design/reference/*.png`.
+- `DatabaseSeeder` creates the owner account and the default reminders (once), and calls `DemoSeeder` only in `local` and `testing`. Production starts empty.
+- `DemoSeeder` reproduces the prototype data (6 goals, today's 8 actions, the nomad visa board with 20 tasks, history of completions, reminders and a log) so the UI can be compared with `docs/design/reference/*.png`. Every date is counted from today, so the screens look the same whichever day it runs. It does nothing when the owner already has goals.

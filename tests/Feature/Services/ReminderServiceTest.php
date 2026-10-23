@@ -39,6 +39,12 @@ describe('create and update', function () {
             ->and($reminder->channels->all())->toBe([ReminderChannel::Telegram]);
     });
 
+    it('stores an empty weekday list as no weekdays when a date is set', function () {
+        $reminder = $this->service->create($this->user, reminderData(['daysOfWeek' => [], 'fireOn' => day('2027-01-01')]));
+
+        expect($reminder->days_of_week)->toBeNull();
+    });
+
     it('creates a one-off reminder for a date', function () {
         $reminder = $this->service->create($this->user, reminderData(['daysOfWeek' => null, 'fireOn' => day('2027-01-01')]));
 
@@ -64,6 +70,8 @@ describe('create and update', function () {
         'both weekdays and date' => [['fireOn' => day('2027-01-01')]],
         'weekday out of range' => [['daysOfWeek' => [0]]],
         'goal kind without a goal' => [['kind' => ReminderKind::DeadlineAlert]],
+        'impossible time' => [['time' => '25:99']],
+        'time without leading zero' => [['time' => '9:05']],
     ]);
 
     it('rejects a goal of another user', function () {

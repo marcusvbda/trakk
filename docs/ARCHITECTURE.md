@@ -133,6 +133,10 @@ Mutations (check action, move card, toggle reminder) use Inertia `router` / `<Fo
 - Each one dispatches `SendReminder` (queued). The job builds the message through `ReminderService` and sends it with `TelegramClient` (or mail), then records `last_sent_at` and an activity.
 - Overdue detection: a daily scheduled command logs `task_overdue` activities at 00:05 user time.
 
+## Seeding
+
+`DatabaseSeeder` creates the owner (`OWNER_EMAIL` / `OWNER_PASSWORD`) and the five default reminders. In `local` and `testing` it also runs `DemoSeeder`, which builds the prototype data relative to today (`database/seeders/Demo/DemoHistory.php` generates the completion history). Production gets no demo data.
+
 ## Security
 
 - Every query is scoped to the authenticated user; policies enforce ownership on route-model binding.
