@@ -208,6 +208,8 @@
 @layer base {
     html {
         color-scheme: dark;
+        touch-action: manipulation;
+        -webkit-text-size-adjust: 100%;
     }
     body {
         @apply bg-canvas font-sans text-base font-light text-body;
@@ -244,5 +246,14 @@
     *::after {
         animation: none !important;
         transition: none !important;
+    }
+}
+
+/* iOS Safari zooms into any focused field under 16px; unlayered so it beats the size utilities */
+@media (pointer: coarse) {
+    input,
+    textarea,
+    select {
+        font-size: 16px;
     }
 }
