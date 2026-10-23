@@ -16,21 +16,21 @@ rm -rf trakk-app
 cd trakk
 ```
 
-- [ ] App created and merged (`rsync --ignore-existing`, then delete `trakk-app`)
-- [ ] `.env`: `DB_CONNECTION=pgsql`, `DB_DATABASE=trakk`, `APP_TIMEZONE=UTC`; databases `trakk` and `trakk_test` created (`createdb trakk && createdb trakk_test`)
-- [ ] `phpunit.xml`: tests use pgsql `trakk_test`
-- [ ] `composer require laravel/mcp` and `php artisan vendor:publish --tag=ai-routes`
-- [ ] `composer require --dev larastan/larastan`, `phpstan.neon` at level 6 over `app/`
-- [ ] `php artisan boost:install` (Claude Code: guidelines, skills, MCP). Confirm `CLAUDE.md` keeps the project section above the Boost block
-- [ ] `ln -s ../.ai/rules .claude/rules` (if not present) so Claude Code auto-loads path-scoped rules
-- [ ] Composer scripts: `test`, `lint` (`pint`), `analyse` (`phpstan`); npm script `types` (`tsc --noEmit`) if missing
-- [ ] Fonts: `npm i @fontsource-variable/inter @fontsource/jetbrains-mono`, imported in `app.tsx`
-- [ ] Design tokens from `docs/DESIGN.md` pasted into `resources/css/app.css`; app forced to dark
-- [ ] `Date::use(CarbonImmutable::class)`, `Model::preventLazyLoading()`, `Model::shouldBeStrict()` (non-prod) in `AppServiceProvider`
-- [ ] Auth reduced to login + logout: in `config/fortify.php` keep no features (remove registration, reset passwords, email verification, two-factor); delete the starter-kit pages, routes and tests for those flows
-- [ ] Owner account created by `DatabaseSeeder` from `.env` (`OWNER_EMAIL`, `OWNER_PASSWORD`)
+- [x] App created and merged (`rsync --ignore-existing`, then delete `trakk-app`)
+- [x] `.env`: `DB_CONNECTION=pgsql`, `DB_DATABASE=trakk`, `APP_TIMEZONE=UTC`; databases `trakk` and `trakk_test` created (`createdb trakk && createdb trakk_test`)
+- [x] `phpunit.xml`: tests use pgsql `trakk_test`
+- [x] `composer require laravel/mcp` and `php artisan vendor:publish --tag=ai-routes`
+- [x] `composer require --dev larastan/larastan`, `phpstan.neon` at level 6 over `app/`
+- [x] `php artisan boost:install` (Claude Code: guidelines, skills, MCP). Confirm `CLAUDE.md` keeps the project section above the Boost block
+- [x] `ln -s ../.ai/rules .claude/rules` (if not present) so Claude Code auto-loads path-scoped rules
+- [x] Composer scripts: `test`, `lint` (`pint`), `analyse` (`phpstan`); npm script `types` (`tsc --noEmit`) if missing
+- [x] Fonts: `npm i @fontsource-variable/inter @fontsource/jetbrains-mono`, imported in `app.tsx`
+- [x] Design tokens from `docs/DESIGN.md` pasted into `resources/css/app.css`; app forced to dark
+- [x] `Date::use(CarbonImmutable::class)`, `Model::preventLazyLoading()`, `Model::shouldBeStrict()` (non-prod) in `AppServiceProvider`
+- [x] Auth reduced to login + logout: in `config/fortify.php` keep no features (remove registration, reset passwords, email verification, two-factor); delete the starter-kit pages, routes and tests for those flows
+- [x] Owner account created by `DatabaseSeeder` from `.env` (`OWNER_EMAIL`, `OWNER_PASSWORD`)
 - [ ] Sign-in page rebuilt with `AuthLayout`, `LogoMark`, `TextField` to match `docs/design/reference/login-*.png`; feature tests: logs in, rejects wrong password, throttles
-- [ ] First commit: `chore: scaffold Laravel 13 React starter kit`
+- [x] First commit: `chore: scaffold Laravel 13 React starter kit`
 
 ## M1 — Domain and data
 
