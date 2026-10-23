@@ -43,6 +43,8 @@ MAIL_PASSWORD=<your Resend API key>
 MAIL_FROM_ADDRESS=<an address on a domain verified in Resend>
 ```
 
+Without a verified domain (local development) use `MAIL_FROM_ADDRESS=onboarding@resend.dev`: Resend only delivers that sender to the email of the Resend account, so `OWNER_EMAIL` must be that address. Never commit the API key; it lives only in `.env`.
+
 ## MCP server (Claude)
 
 The local server is named `trakk` and acts for the owner account (`OWNER_EMAIL`).
