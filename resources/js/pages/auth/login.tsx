@@ -128,15 +128,7 @@ export default function Login() {
                         className="mt-1 transition-colors hover:bg-accent/8"
                     >
                         {form.processing ? (
-                            <>
-                                <span>authenticating</span>
-                                <span
-                                    aria-hidden="true"
-                                    className="animate-blink"
-                                >
-                                    _
-                                </span>
-                            </>
+                            <span>authenticating</span>
                         ) : (
                             <>
                                 <span>sign in</span>

@@ -181,7 +181,6 @@
 
     /* motion */
     --animate-pulse-dot: pulse-dot 2.2s ease-in-out infinite;
-    --animate-blink: blink 1.1s steps(1) infinite;
     --animate-fade-in: fade-in 0.45s ease-out;
 
     @keyframes pulse-dot {
@@ -191,11 +190,6 @@
         }
         50% {
             opacity: 0.25;
-        }
-    }
-    @keyframes blink {
-        50% {
-            opacity: 0;
         }
     }
     @keyframes fade-in {

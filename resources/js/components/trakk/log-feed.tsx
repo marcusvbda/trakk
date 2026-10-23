@@ -61,9 +61,6 @@ export function LogFeed({
                     )}
                 </div>
             ))}
-            <div className="text-faint">
-                ›<span className="animate-blink text-accent"> _</span>
-            </div>
         </div>
     );
 }

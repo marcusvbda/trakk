@@ -20,7 +20,7 @@ The prototypes are reference material only. Never copy their markup or runtime i
 2. **Lines, not fills.** Separation comes from 1px borders on near-black surfaces. No shadows, no gradients, no glassmorphism.
 3. **Mono for data, sans for language.** Numbers, labels, dates, metadata and status use JetBrains Mono. Titles and human sentences use Inter Light.
 4. **Color carries meaning.** Neutral greys everywhere; color only for the accent (done/positive), the status colors (behind, watch, info) and each goal's own color.
-5. **Quiet motion.** Pulsing live dots, a blinking cursor, bars that grow, rows that fade in. Nothing bounces or slides.
+5. **Quiet motion.** Pulsing live dots, bars that grow, rows that fade in. Nothing bounces or slides. **Never a blinking cursor, caret or underscore anywhere (owner decision): a blink means "you can type here", so it exists only in a real text input, where the browser draws it. No `_` cursor after the log, no `authenticating_`.**
 6. **Dark only.** There is no light theme.
 
 ## Tokens
@@ -111,11 +111,9 @@ Paste into `resources/css/app.css` (Tailwind v4, CSS-first config). Use the gene
 
   /* motion */
   --animate-pulse-dot: pulse-dot 2.2s ease-in-out infinite;
-  --animate-blink: blink 1.1s steps(1) infinite;
   --animate-fade-in: fade-in 0.45s ease-out;
 
   @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-  @keyframes blink { 50% { opacity: 0; } }
   @keyframes fade-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 }
 
@@ -190,7 +188,7 @@ The only auth screen in the MVP (no registration, no password reset, no email ve
   3. Panel header (`pb-5 mb-5 border-b divider`): 40px logo mark (outer diamond stroke 0.6 in the 18-unit viewBox, inner diamond filled `accent`), `Trakk` in sans 28px weight 300 tracking -0.02em `fg-strong`, tagline `goals · pace · focus` mono 10.5px tracking 0.06em `muted`.
   4. Form, gap 14px. Each field: micro label (`EMAIL`, `PASSWORD`) above a 44px `field` box with a `›` accent prompt, mono 12px input, border `line` → `line-hover` on hover → `accent` on focus-within → `danger-line` when invalid. Password box ends with a 56px `SHOW`/`HIDE` toggle separated by a `divider` line (`aria-pressed`).
   5. Error: `role="alert"`, 1px `danger-line` box, mono 10.5px `danger`, `× invalid credentials`. Server errors from Fortify are shown with this component (map the default message to `invalid credentials`; throttling to `too many attempts · retry in Ns`).
-  6. Submit: full width, 44px, 1px `accent` border, mono 11.5px `accent` text `sign in →`; hover background `accent` at 8% opacity; while processing `authenticating_` with blinking underscore and `aria-busy`.
+  6. Submit: full width, 44px, 1px `accent` border, mono 11.5px `accent` text `sign in →`; hover background `accent` at 8% opacity; while processing `authenticating` (plain text, no blinking underscore) and `aria-busy`.
   7. Panel footer (`mt-[18px] pt-3 border-t divider`): `single-user instance` · `access is logged`, mono 10px `faint`.
   8. Below panel, centered: `v0.1 · tls · Europe/Dublin`.
 - Logo mark SVG (use everywhere, sizes 16 / 18 / 40):
@@ -223,7 +221,7 @@ Build these in `resources/js/components/trakk/`. Each one is small, typed and du
 | `ConsistencyHeatmap` | 12 week columns × 7 day rows, 13px cells, 3px gaps, `heat-0..4`, future cells transparent with `line-subtle` border, mon/wed/fri/sun labels, legend less → more. |
 | `ReminderRow` | Time 13px mono 300, label + `freq · channel`, `Toggle` (26×14 track, 8px knob, accent when on) inside a 44px button. |
 | `KanbanBoard` / `KanbanColumn` / `KanbanCard` | Columns `sunken` with `divider` border; header dot (to do `muted`, doing `warning`, done `accent`) + count. Card `raised`, title 12px, meta `N/M items · due 24 oct` (`danger` when overdue, plus `danger-line` border), optional tag (`critical`, `milestone`) in `warning`, 2px checklist progress, 28px square move button (`→` advance, `↺` reopen). Done cards are struck through and `faint`. |
-| `LogFeed` | Mono grid `78px 14px 1fr auto`: time, symbol (`✓` accent, `→` info, `!` warning, `◆` info, `×` danger), text, points. New entries fade in. Ends with `›` and a blinking accent `_`. `aria-live="polite"`. |
+| `LogFeed` | Mono grid `78px 14px 1fr auto`: time, symbol (`✓` accent, `→` info, `!` warning, `◆` info, `×` danger), text, points. New entries fade in. Ends with the last entry: no prompt line, no cursor. `aria-live="polite"`. |
 | `CommandBar` | 34px tall `field` input with `›` prompt in accent and a `⌘K` key hint. Opens with ⌘K. |
 | `LiveDot` | 5–6px accent circle with `animate-pulse-dot`. |
 | `LogoMark` | The SVG above, `currentColor`, size prop (16 / 18 / 40). |

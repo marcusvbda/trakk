@@ -22,7 +22,7 @@ description: Implement or change a Trakk screen or component so it matches the a
 - Keep components presentational. Numbers arrive computed from the backend.
 - Seed realistic data with `php artisan migrate:fresh --seed` (DemoSeeder mirrors the prototype).
 - Wire interactions with Inertia (optimistic check, kanban move, filters, toggles), keyboard accessible, `aria-*` as in DESIGN.md.
-- Add the motion from DESIGN.md (live dot pulse, cursor blink, fade-in for new rows, width transitions) and respect `prefers-reduced-motion`.
+- Add the motion from DESIGN.md (live dot pulse, fade-in for new rows, width transitions) and respect `prefers-reduced-motion`.
 
 ## 4. Verify
 
