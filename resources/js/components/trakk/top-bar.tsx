@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { LogoMark } from '@/components/trakk/logo-mark';
 import { UserMenu } from '@/components/trakk/user-menu';
 import { Chip } from '@/components/ui/chip';
@@ -12,6 +13,7 @@ export function TopBar({
     data: TopBarData;
     onSlotChange: (slot: HTMLElement | null) => void;
 }) {
+    const { name, version } = usePage().props;
     const now = useClock();
 
     return (
@@ -19,10 +21,10 @@ export function TopBar({
             <div className="flex items-center gap-2.5">
                 <LogoMark size={18} />
                 <span className="font-mono text-md font-medium tracking-[0.04em] text-fg">
-                    ~/trakk
+                    ~/{name.toLowerCase()}
                 </span>
                 <Chip size="plain" tone="faint">
-                    v0.1
+                    v{version}
                 </Chip>
             </div>
             <div className="flex items-center gap-2.5 font-mono text-[11px] text-muted">

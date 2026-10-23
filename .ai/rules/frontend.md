@@ -18,6 +18,7 @@ paths:
 ## Structure
 
 - Every authenticated Trakk page gets the top bar (logo, `~/trakk`, version, date, live clock, year progress) from `TrakkLayout`; pages never render their own copy. Page controls go into it with `<TopBarSlot>`. The account dropdown with log out (`UserMenu`) is part of it; never add another logout control. The data is the shared Inertia prop `topBar`, not a per-page prop.
+- App name and version are never hard-coded in components or copy. They come from `config('app.name')` (`APP_NAME`, default `Trakk`) and `config('trakk.version')` (`APP_VERSION`), shared as the Inertia props `name` and `version`; read them with `usePage().props`. The brand mark is the `LogoMark` diamond in the accent green, and `public/favicon.svg`, `favicon.ico` and `apple-touch-icon.png` reproduce it. Owner decision.
 - No blinking cursor, caret or underscore anywhere (no `animate-blink`, no `_` after logs or loading text). A blink only exists in a real, typeable input, drawn by the browser. Owner decision.
 - Everything clickable has `cursor: pointer`. The base layer in `app.css` covers `button`, `a[href]`, `[role=button]`, `[role=menuitem]`, `summary` and `select`; a clickable element outside those needs `role="button"` or `cursor-pointer`. Never remove that base rule. Owner decision.
 - Pages in `resources/js/pages/` (lowercase, kebab-case files, matching `Inertia::render` names).
@@ -26,6 +27,7 @@ paths:
 
 ## Components
 
+- Owner rule: no component is ever blank. Every list, panel, chart, kanban column, sheet section and the command palette renders `EmptyState` (or its empty chart/grid structure with a caption) when it has no data, with the copy from `docs/specs/real-features.md` → Empty states. Never hide a panel for lack of data.
 - Function components, typed props, no `any`. Small and presentational: data in through props, events out through callbacks.
 - No business calculations in React. Pace, points, streaks, KPIs arrive computed. Formatting helpers live in `resources/js/lib/format.ts`.
 - Lists use stable keys from ids.

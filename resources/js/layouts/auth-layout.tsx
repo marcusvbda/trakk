@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { LiveDot } from '@/components/trakk/live-dot';
 import { LogoMark } from '@/components/trakk/logo-mark';
@@ -6,6 +7,7 @@ import { useClock } from '@/hooks/use-clock';
 import { formatClock } from '@/lib/format';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
+    const { name } = usePage().props;
     const now = useClock();
 
     return (
@@ -14,7 +16,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 <div className="flex items-center gap-2.5">
                     <LogoMark size={16} />
                     <span className="font-mono text-[12px] font-medium tracking-[0.04em] text-fg">
-                        ~/trakk
+                        ~/{name.toLowerCase()}
                     </span>
                     <Chip size="plain" tone="faint">
                         auth
@@ -40,7 +42,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                     <span className="text-accent">●</span> secure session ·
                     postgres · mcp ready
                 </span>
-                <span>trakk</span>
+                <span>{name.toLowerCase()}</span>
             </footer>
         </div>
     );

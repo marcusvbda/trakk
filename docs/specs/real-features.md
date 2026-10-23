@@ -44,13 +44,13 @@ Every item below is a checklist entry for the sessions. "Source" is what produce
 | KPI strip (6 cards) | `DashboardService` using `ScoreService`, `StreakService`, `GoalProgressService`, task queries. Rules in PRODUCT.md → KPIs. | — |
 | Today | Today list rule (PRODUCT.md → Tasks). `timeLabel`: `HH:MM` if `scheduled_time`; `today` if one-off due today; `all day` for a recurring task without time; `anytime` for a `doing` task without due date. `isDueToday` for one-off due today. | Check / uncheck → `POST /tasks/{task}/completions` / `DELETE /tasks/{task}/completions/today`. Optimistic, partial reload `only: [kpis, actions, pointsChart, consistency, goals, focusProject, log, status]`. |
 | Overdue | One-off tasks not done with `due_date < today`, sorted by days late desc. | `replan` → replan sheet. |
-| Suggestion | `SuggestionService` (rule below). Hidden when there is nothing overdue. | — |
+| Suggestion | `SuggestionService` (rule below). Not rendered when nothing is overdue; the Overdue empty state covers it. | — |
 | Next 7 days | One-off tasks not done with due date in `(today, today+7]`, plus active goals whose `due_date` falls in that window (`goal deadline`). `dayLabel` = `SAT 24`. | Click → goal page. |
 | Goals grid | Active goals with progress, expected, pace, week dots (habits), progress label (projects). | Filter tabs stay client-side (pure presentation). Card → goal page. |
 | Points · 30 days | `ScoreService::series(user, today, 30)`, tiers by rule. Stats: average (1 decimal), best day, days at target. | — |
 | Consistency · 12 weeks | `ConsistencyService` heat levels, Monday-based weeks, future cells `null`. | — |
 | Reminders | Owner's reminders (not goal-scoped first, then goal-scoped), with `timeLabel`, `frequencyLabel`, `channelsLabel`. | Toggle → `PATCH /reminders/{reminder}/active`. Row click → reminder sheet. Panel header gets `+` (icon button) → reminder sheet in create mode. |
-| Focus project | Most behind active project goal (lowest delta; tie → earliest due date). 3 cards per column max, `hiddenCount` for the rest. Hidden when no active project exists. | Move card → `PATCH /tasks/{task}/status`. Card click → task sheet. |
+| Focus project | Most behind active project goal (lowest delta; tie → earliest due date). 3 cards per column max, `hiddenCount` for the rest. Empty state when no active project exists. | Move card → `PATCH /tasks/{task}/status`. Card click → task sheet. |
 | Log | Latest 8 activities of the owner. | — |
 | Footer status | `next reminder HH:MM` (next active reminder occurrence today, else tomorrow's first), `N pts to daily target` / `daily target hit`, `mcp N tools`, `telegram bot active` when token + chat id are set and the last send did not fail, else `telegram off`. | — |
 
@@ -139,7 +139,60 @@ Build with existing tokens and components (`Panel`, `PanelHeader`, `TextField`, 
 - **Replan sheet:** list of overdue tasks with checkboxes (all selected), target segmented `today · tomorrow · next monday · pick date`, save button `move N tasks`.
 - **Check-in sheet:** score line (`9/14 pts · 64%` with progress bar), today's `ActionRow`s, `close the day` accent button.
 - **Command palette** (`components/trakk/command-palette.tsx`): opens on ⌘K / Ctrl+K and on click of the command bar; centered 560px panel at 15vh, `surface`, `line` border, input row identical to the command bar; results grouped under mono micro labels (`commands`, `goals`, `tasks today`), rows 36px with arrow-key navigation and Enter. Commands: new goal, new task, new reminder, check-in, replan, go to dashboard, go to goals, settings, sign out. Goals and today's tasks come from an optional Inertia prop `commandIndex` loaded on open (`router.reload({ only: ['commandIndex'] })`); selecting a today task toggles its completion.
-- **Empty states:** every panel has one, mono 11px `faint` inside a dashed `line-strong` box, with a single action: Today `no actions today · + task`, Goals `no active goals · + goal`, Focus project hidden, Reminders `no reminders · + reminder`, Log `nothing logged yet`. The dashboard with zero goals shows a first-run panel: `› trakk init` + three steps (create a goal, add tasks, set telegram) with buttons.
+- **Empty states:** see the section below. Every surface listed there is part of the session that builds that surface.
+
+## Empty states (owner rule: no component is ever blank)
+
+**Rule:** a panel, card, chart, list, column, sheet section or palette never renders blank and never disappears because it has no data. It shows an `EmptyState` (or, for charts and grids, its empty structure plus a caption). Panels in the same row keep their height.
+
+**`EmptyState` component** (`components/trakk/empty-state.tsx`):
+- 1px dashed `line-strong` box, `rounded-control`, padding 14px, fills the panel body (`flex-1`, min-height 88px in panels, 56px in kanban columns and sheet sections).
+- Line 1: mono 11px. Leading glyph: `›` in `accent` for neutral ("nothing yet"), `✓` in `accent` for positive ("all clear"), `!` in `warning` for a gap the owner should fix. Text in `body`.
+- Line 2 (optional): mono 10px `faint`, one useful fact (the next deadline, what will appear here).
+- Action (optional): one `TrakkButton size="sm"` that opens the right sheet.
+- Terminal touch: the log-style empties end with a blinking accent `_`.
+- `role="status"`; never a spinner, illustration or emoji.
+
+**Charts and grids keep their structure:** the points chart draws 30 placeholder bars (2px, `bar-low`) and the target line; the heatmap draws all cells at `heat-0`; the pace chart draws axes and the expected line. A caption sits on top of the structure.
+
+**Copy, surface by surface** (`{}` are server-filled values):
+
+| Surface | State | Copy |
+| --- | --- | --- |
+| KPI · points today | no points | value `0` `/14`, sub `first check of the day` |
+| KPI · streak | 0 | `0 days`, sub `start one today` (record line when a record exists) |
+| KPI · this week | no data last week | value as usual, sub `no data last week` instead of a % |
+| KPI · goals on pace | no active goals | `—`, sub `no active goals` |
+| KPI · overdue | 0 | `0` in `accent`, sub `all clear` |
+| KPI · on time · 30d | no deadlines | `—`, sub `no deadlines in 30d` |
+| Today | nothing scheduled | `› no actions scheduled today` · `{next action day}` or `add a task with weekdays or a due date` · `+ task` |
+| Overdue (+ suggestion) | nothing overdue | `✓ nothing overdue` · `next deadline: {title} · {day}` or `no deadlines set` (suggestion box not rendered) |
+| Next 7 days | nothing in window | `› nothing due in the next 7 days` · `next: {title} · {date}` or `+ task` |
+| Goals grid | no active goals | `› no active goals` · `goals you create show their pace here` · `+ goal` |
+| Goals grid | filter empty | `› no habit goals` / `› no project goals` / `✓ every goal is on pace` (off pace) |
+| Points · 30 days | no points ever | structure + `› no points yet · check an action to start`; stats show `—` |
+| Consistency | no history | structure + `› your first good day lights the first cell` |
+| Reminders | none | `› no reminders` · `telegram not linked · settings` when no chat id · `+ reminder` |
+| Focus project | no active project | `› no active project` · `the most behind project shows its board here` · `+ goal` |
+| Kanban column | empty | to do `› no tasks · + task`, doing `› nothing in progress`, done `› nothing done yet` |
+| Log | empty | `› nothing logged yet_` |
+| Footer status | no reminders / telegram off | `no reminders set` / `telegram off · link in settings` |
+| First run (zero goals) | dashboard | first-run panel above everything: `› trakk init` + three steps (create a goal, add tasks, link telegram), each with its button and a `✓` once done; other panels show their own empty states |
+| Goal · objective | no description / no done criteria | `› no objective yet · edit` / `! done when: not defined · a goal without an end never reaches 100%` |
+| Goal · pace chart | before start / project without tasks | structure + `› starts in {n} days` / `› add tasks to measure progress` |
+| Goal · progress | no tasks | `0/0`, `› add the first task` · `+ task` |
+| Goal · board | no tasks at all | one `EmptyState` across the board: `› no tasks yet` · `break the goal into steps` · `+ task` |
+| Goal · habit actions | none | `› no actions yet` · `add what you will repeat each week` · `+ task` |
+| Goal · reminders | none | `› no reminders for this goal` · `+ reminder` |
+| Goal · history | none | `› no history yet_` |
+| Goals list (`/goals`) | group empty | one line per group: `› no paused goals` (groups never disappear) |
+| Command palette | no matches | `› no matches for "{q}"` · `try a goal or task name` |
+| Task sheet · checklist | none | `› add the first item` (the inline add field sits below) |
+| Check-in sheet | no actions | `› no actions today` · `you can still close the day`; button stays enabled |
+| Replan sheet | nothing overdue | `✓ nothing to replan`; save button hidden |
+| Settings · telegram | not linked | `! not linked · run php artisan telegram:link` |
+
+**Tests:** one feature test renders the dashboard and a goal page for a user with no data and asserts the empty-state props; `tests/Browser/ScreensTest.php` adds an `empty` screenshot of the dashboard and of a goal with no tasks (1440px), saved for visual review.
 
 ## Reminders delivery
 
@@ -188,6 +241,7 @@ Each session: start in plan mode, read this spec section + the docs it names, co
 ## Done when
 
 - Every row in "Feature inventory" works against the database and survives a page reload.
+- Every surface in "Empty states" shows its empty state for a user with no data; nothing renders blank.
 - `php artisan migrate:fresh --seed` in local renders screens matching the reference PNGs; in production with no demo data, the first-run panel appears.
 - A reminder set for the next minute arrives in Telegram while `composer run dev` is running.
 - In Claude Code, "I did 30 minutes of speaking today" completes the right task and the dashboard shows the points after reload.

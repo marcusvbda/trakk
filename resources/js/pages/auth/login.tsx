@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { AuthPanel } from '@/components/trakk/auth-panel';
@@ -10,6 +10,7 @@ import { store } from '@/routes/login';
 const throttleStatus = 429;
 
 export default function Login() {
+    const { version } = usePage().props;
     const form = useForm({ email: '', password: '' });
     const [isPasswordShown, setIsPasswordShown] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
@@ -140,7 +141,7 @@ export default function Login() {
             </AuthPanel>
 
             <div className="text-center font-mono text-xs text-faint">
-                v0.1 · tls · Europe/Dublin
+                v{version} · tls · Europe/Dublin
             </div>
         </>
     );

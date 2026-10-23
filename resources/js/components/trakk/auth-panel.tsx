@@ -1,9 +1,12 @@
+import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { LogoMark } from '@/components/trakk/logo-mark';
 
 const corner = 'pointer-events-none absolute size-3';
 
 export function AuthPanel({ children }: { children: ReactNode }) {
+    const { name } = usePage().props;
+
     return (
         <section
             aria-labelledby="sign-in-title"
@@ -33,7 +36,7 @@ export function AuthPanel({ children }: { children: ReactNode }) {
                         id="sign-in-title"
                         className="text-[28px] leading-none font-light tracking-[-0.02em] text-fg-strong"
                     >
-                        Trakk
+                        {name}
                     </h1>
                     <span className="font-mono text-sm tracking-[0.06em] text-muted">
                         goals · pace · focus

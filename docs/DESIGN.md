@@ -155,7 +155,7 @@ Lowercase is the default voice for mono metadata ("due 24 oct", "on pace +2%"). 
 ## Layout
 
 - Page: `bg-canvas`, optional `scanlines` overlay, content `px-5`, vertical gap 14px between rows, 28px bottom padding. **The page container has no max-width: content always fills the full viewport width (owner decision). Never add `max-w-*` to the page container or `main`, even though the prototypes cap it at 1440px; this is a deliberate deviation from them.**
-- **Top bar on every authenticated Trakk page (owner decision).** `TrakkLayout` always renders the top bar: logo mark + `~/trakk` + `v0.1` chip, date label, live clock and year progress. Never build a page-local copy and never omit it on a new page. The date label and year progress come from the shared Inertia prop `topBar` (`HandleInertiaRequests`), not from page props. Page-specific controls (command bar, `+ goal`, `check-in`, `synced`, `edit`, `+ task`) are injected into the bar's right side with `<TopBarSlot>` (a portal), so the bar stays one row. The last item of the bar, always at the far right, is the `UserMenu` (below), also from the layout: pages never render their own account or logout controls. The sign-in screen is the only exception: it has its own auth bar (see Sign in).
+- **Top bar on every authenticated Trakk page (owner decision).** `TrakkLayout` always renders the top bar: logo mark + `~/<app name>` + `v<version>` chip (name and version come from the shared Inertia props `name` and `version`, i.e. `config('app.name')` and `config('trakk.version')`; never hard-code them), date label, live clock and year progress. Never build a page-local copy and never omit it on a new page. The date label and year progress come from the shared Inertia prop `topBar` (`HandleInertiaRequests`), not from page props. Page-specific controls (command bar, `+ goal`, `check-in`, `synced`, `edit`, `+ task`) are injected into the bar's right side with `<TopBarSlot>` (a portal), so the bar stays one row. The last item of the bar, always at the far right, is the `UserMenu` (below), also from the layout: pages never render their own account or logout controls. The sign-in screen is the only exception: it has its own auth bar (see Sign in).
 - Rows are flex containers with `flex-wrap` and `gap-3.5` (14px). Each panel has `flex: <grow> 1 <basis>` and `min-w-0`, so the layout stacks on mobile without breakpoints.
 - Grids: KPI strip `grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5`; goal cards `grid-cols-[repeat(auto-fill,minmax(min(100%,380px),1fr))] gap-2.5`.
 - Panel: `bg-surface border border-line rounded-panel`, padding `12px 14px` (lists use `12px 10px 10px` so row hover reaches the edge). The heading row has `pb-2.5 mb-1 border-b border-divider`.
@@ -190,7 +190,7 @@ The only auth screen in the MVP (no registration, no password reset, no email ve
   5. Error: `role="alert"`, 1px `danger-line` box, mono 10.5px `danger`, `× invalid credentials`. Server errors from Fortify are shown with this component (map the default message to `invalid credentials`; throttling to `too many attempts · retry in Ns`).
   6. Submit: full width, 44px, 1px `accent` border, mono 11.5px `accent` text `sign in →`; hover background `accent` at 8% opacity; while processing `authenticating` (plain text, no blinking underscore) and `aria-busy`.
   7. Panel footer (`mt-[18px] pt-3 border-t divider`): `single-user instance` · `access is logged`, mono 10px `faint`.
-  8. Below panel, centered: `v0.1 · tls · Europe/Dublin`.
+  8. Below panel, centered: `v<version> · tls · Europe/Dublin` (version from the shared prop `version`).
 - Logo mark SVG (use everywhere, sizes 16 / 18 / 40):
 
 ```html
@@ -224,6 +224,7 @@ Build these in `resources/js/components/trakk/`. Each one is small, typed and du
 | `LogFeed` | Mono grid `78px 14px 1fr auto`: time, symbol (`✓` accent, `→` info, `!` warning, `◆` info, `×` danger), text, points. New entries fade in. Ends with the last entry: no prompt line, no cursor. `aria-live="polite"`. |
 | `UserMenu` | Last item of the top bar on every authenticated page. 34px trigger button showing only the user's first name in mono 11px ("Marcus Vinicius" shows "Marcus"), cut at 10 characters plus `...` when the first name is longer; the full name stays in the `aria-label` and in the menu, then `▾`; border `line-strong`. Never show only initials. Opens a Radix dropdown (`surface`, `line` border, `rounded-panel`, no shadow, min 220px, aligned to the right edge): name (`fg`), email (`muted`), `divider`, then `× log out` in `danger`, 44px tall, `data-test="logout-button"`. Log out is a `POST` to the Fortify logout route (`router.post(logout.url())`) after `router.flushAll()`, and lands on `/login`. Add future account actions here (settings, etc.), not elsewhere. |
 | `CommandBar` | 34px tall `field` input with `›` prompt in accent and a `⌘K` key hint. Opens with ⌘K. |
+| `EmptyState` | Owner rule: no component is ever blank. Dashed 1px `line-strong` box, `rounded-control`, padding 14px, fills the panel body. Line 1 mono 11px with a glyph (`›` accent neutral, `✓` accent all clear, `!` warning gap), line 2 mono 10px `faint` with one useful fact, optional small action button. Charts and grids keep their empty structure with a caption. Copy per surface: `docs/specs/real-features.md` → Empty states. |
 | `LiveDot` | 5–6px accent circle with `animate-pulse-dot`. |
 | `LogoMark` | The SVG above, `currentColor`, size prop (16 / 18 / 40). |
 | `AuthLayout` | Top bar, centered 380px column, footer bar (sign-in screen spec). Replaces the starter kit's auth layouts. |
@@ -257,7 +258,12 @@ Same components; rows stack through `flex-wrap`. Kanban scrolls horizontally ins
 
 ## Do / don't
 
+- Do give every panel, card, chart, list, column and sheet section an empty state (owner rule). Never render a blank area or hide a panel because it has no data.
 - Do keep panels flat, 1px, 6px radius. Don't add shadows, gradients or blurred backgrounds.
 - Do use mono for every number. Don't use font weights above 500.
 - Do reuse the goal color for everything that belongs to that goal. Don't invent new hues.
 - Don't use shadcn/ui default styling on Trakk screens. Starter-kit pages (auth, settings) may keep shadcn components, restyled with these tokens.
+
+## Brand and favicon (owner decision)
+
+The brand mark is the `LogoMark` diamond in `--color-accent` (`#4ADE9A`). `public/favicon.svg`, `public/favicon.ico` and `public/apple-touch-icon.png` (on `--color-canvas`) reproduce it; never swap them for the starter-kit icon. The app name is `Trakk` (`APP_NAME`) and the version is `config('trakk.version')` (`APP_VERSION`).
