@@ -98,7 +98,7 @@
 
 /* Trakk design tokens (docs/DESIGN.md) */
 @theme {
-    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
     /* surfaces */
@@ -164,6 +164,15 @@
     --text-md: 13px;
     --text-lg: 14px;
 
+    /* the prototypes use the font's own line height, not Tailwind's default per-size one */
+    --text-3xs--line-height: normal;
+    --text-2xs--line-height: normal;
+    --text-xs--line-height: normal;
+    --text-sm--line-height: normal;
+    --text-base--line-height: normal;
+    --text-md--line-height: normal;
+    --text-lg--line-height: normal;
+
     /* radius */
     --radius-chip: 3px;
     --radius-control: 4px;
@@ -206,7 +215,7 @@
         color-scheme: dark;
     }
     body {
-        @apply bg-canvas font-sans text-base font-light text-body antialiased;
+        @apply bg-canvas font-sans text-base font-light text-body;
         line-height: normal;
     }
     ::placeholder {

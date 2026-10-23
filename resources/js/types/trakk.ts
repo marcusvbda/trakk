@@ -31,7 +31,13 @@ export type TaskStatus = 'todo' | 'doing' | 'done';
 
 export type DayState = 'done' | 'missed' | 'upcoming';
 
-export type LogKind = 'done' | 'undone' | 'sent' | 'checkin' | 'warning';
+export type LogKind =
+    | 'done'
+    | 'undone'
+    | 'sent'
+    | 'checkin'
+    | 'warning'
+    | 'reopened';
 
 export type LogEntry = {
     id: string;
