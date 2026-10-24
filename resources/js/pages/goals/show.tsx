@@ -37,6 +37,7 @@ export default function GoalShow(props: GoalDetailProps) {
         actions,
         reminders,
         history,
+        weeks,
     } = props;
     const state = useGoalBoardState(props);
     const sheets = useSheets();
@@ -156,6 +157,12 @@ export default function GoalShow(props: GoalDetailProps) {
                             live
                         </span>
                     </PanelHeader>
+                    {weeks.length > 0 && (
+                        <LogFeed
+                            entries={weeks}
+                            timeColumn="grid-cols-[64px_14px_minmax(0,1fr)]"
+                        />
+                    )}
                     {history.length === 0 ? (
                         <EmptyState>no history yet</EmptyState>
                     ) : (

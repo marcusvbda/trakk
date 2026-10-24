@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Data\Goals;
 
-use App\Data\WeekDots;
-
 final readonly class GoalProgressData
 {
     /**
@@ -19,6 +17,6 @@ final readonly class GoalProgressData
         public int $totalCount,
         public string $unit,
         public ?array $counts,
-        public ?WeekDots $week,
+        public ?WeeklyProgressData $weekly,
     ) {}
 }

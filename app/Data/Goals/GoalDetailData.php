@@ -12,6 +12,7 @@ final readonly class GoalDetailData
      * @param  list<HabitActionData>|null  $actions  habit goals; `board` is null for them
      * @param  list<GoalReminderData>  $reminders
      * @param  list<LogEntryData>  $history
+     * @param  list<LogEntryData>  $weeks  closed weeks of a habit goal, latest first; empty for projects
      */
     public function __construct(
         public GoalOverviewData $goal,
@@ -22,6 +23,7 @@ final readonly class GoalDetailData
         public ?array $actions,
         public array $reminders,
         public array $history,
+        public array $weeks,
     ) {}
 
     /**

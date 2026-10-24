@@ -100,10 +100,10 @@ describe('with the demo data', function () {
                 ->where('board', null)
                 ->where('progress.unit', 'days')
                 ->where('progress.counts', null)
-                ->has('progress.week.days', 7)
+                ->has('progress.weekly')
                 ->where('paceChart.paceUnit', 'days/wk')
                 ->has('actions.0', fn (Assert $action) => $action
-                    ->hasAll(['id', 'title', 'days', 'timeLabel', 'points', 'weekLabel', 'isDoneToday', 'task'])));
+                    ->hasAll(['id', 'title', 'days', 'timeLabel', 'points', 'weekLabel', 'weekDays', 'task'])));
     });
 
     it('builds the page in a fixed number of queries', function () {
@@ -211,24 +211,6 @@ describe('what the page carries', function () {
                 ->where('actions.0.timeLabel', '07:30')
                 ->where('actions.0.points', 2)
                 ->where('actions.0.weekLabel', '1/3 this week'));
-    });
-
-    it('marks a habit action done today and lets it be logged on an unscheduled day', function () {
-        $this->travelTo(day('2026-10-24'));
-        $goal = Goal::factory()->for($this->user)->habit()->create();
-        $task = Task::factory()->for($goal)->recurring([1, 2, 3, 4, 5])->create();
-
-        $this->actingAs($this->user)
-            ->get(route('goals.show', $goal->slug))
-            ->assertInertia(fn (Assert $page) => $page->where('actions.0.isDoneToday', false));
-
-        $this->actingAs($this->user)->post(route('tasks.completions.store', $task))->assertRedirect();
-
-        $this->actingAs($this->user)
-            ->get(route('goals.show', $goal->slug))
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('actions.0.isDoneToday', true)
-                ->where('actions.0.weekLabel', '1/5 this week'));
     });
 
     it('shows once-only reminders by date and recurring ones by time', function () {

@@ -1,5 +1,4 @@
 import { EmptyState } from '@/components/trakk/empty-state';
-import { WeekDots } from '@/components/trakk/week-dots';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -31,7 +30,7 @@ export function GoalProgressPanel({
     progress,
 }: GoalProgressPanelProps) {
     const sheets = useSheets();
-    const { percent, expectedPercent, doneCount, totalCount, counts, week } =
+    const { percent, expectedPercent, doneCount, totalCount, counts, weekly } =
         progress;
 
     return (
@@ -61,7 +60,21 @@ export function GoalProgressPanel({
                 <span>expected {expectedPercent}%</span>
             </div>
             <div className="mt-auto flex flex-col gap-2">
-                {week && <WeekDots week={week} color={color} />}
+                {weekly && (
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between font-mono text-xs text-muted">
+                            <span>week {weekly.weekNumber}</span>
+                            <span>
+                                {weekly.doneCount}/{weekly.totalCount}
+                            </span>
+                        </div>
+                        <ProgressBar
+                            size="md"
+                            percent={weekly.percent}
+                            fillClassName={goalColorClass[color].bg}
+                        />
+                    </div>
+                )}
                 {counts && totalCount === 0 && (
                     <EmptyState
                         size="compact"

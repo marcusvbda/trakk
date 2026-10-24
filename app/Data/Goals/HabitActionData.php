@@ -10,6 +10,7 @@ final readonly class HabitActionData
 {
     /**
      * @param  list<int>  $days  ISO weekdays the action repeats on
+     * @param  list<HabitDayData>  $weekDays  Monday to Sunday of the current week
      */
     public function __construct(
         public int $id,
@@ -18,7 +19,7 @@ final readonly class HabitActionData
         public string $timeLabel,
         public int $points,
         public string $weekLabel,
-        public bool $isDoneToday,
+        public array $weekDays,
         public TaskSheetData $task,
     ) {}
 }
