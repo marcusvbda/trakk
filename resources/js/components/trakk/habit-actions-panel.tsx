@@ -2,12 +2,15 @@ import { router } from '@inertiajs/react';
 import { EmptyState } from '@/components/trakk/empty-state';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
-import { TrakkCheckbox } from '@/components/ui/trakk-checkbox';
 import { TrakkButton } from '@/components/ui/trakk-button';
+import { TrakkCheckbox } from '@/components/ui/trakk-checkbox';
 import { useSheets } from '@/hooks/use-sheets';
 import { goalColorClass } from '@/lib/goal-color';
 import { cn } from '@/lib/utils';
-import { destroy as undoCompletion, store as completeTask } from '@/routes/tasks/completions';
+import {
+    destroy as undoCompletion,
+    store as completeTask,
+} from '@/routes/tasks/completions';
 import type { GoalColor, HabitAction } from '@/types';
 
 const weekdays = [
@@ -134,7 +137,10 @@ export function HabitActionsPanel({
                                 <span className="min-w-0 flex-[1_1_200px] truncate text-base text-body">
                                     {action.title}
                                 </span>
-                                <WeekdayChips days={action.days} color={color} />
+                                <WeekdayChips
+                                    days={action.days}
+                                    color={color}
+                                />
                                 <span className="w-[44px] flex-none font-mono text-xs text-muted">
                                     {action.timeLabel}
                                 </span>
