@@ -190,6 +190,11 @@ final class GoalDetailService
      */
     private function closedWeeks(Goal $goal, CarbonImmutable $today): array
     {
+        $played = array_filter(
+            $this->weeks->closedWeeks($goal, $today),
+            fn (WeekScoreData $week): bool => $week->totalCount > 0,
+        );
+
         return array_map(
             fn (WeekScoreData $week): LogEntryData => new LogEntryData(
                 -$week->number,
@@ -198,7 +203,7 @@ final class GoalDetailService
                 $week->doneCount.' of '.$week->totalCount,
                 null,
             ),
-            $this->weeks->closedWeeks($goal, $today),
+            array_values($played),
         );
     }
 

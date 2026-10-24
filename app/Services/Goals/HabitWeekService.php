@@ -70,7 +70,7 @@ final class HabitWeekService
             $day = $monday->addDays($offset);
             $days[] = new HabitDayData(
                 $day->toDateString(),
-                $this->isScheduled($task, $day),
+                $task->isScheduledOn($day),
                 $doneOn->has($day->toDateString()),
                 $this->canCheck($task, $day, $today),
             );
@@ -82,7 +82,7 @@ final class HabitWeekService
     /** A scheduled day of the current week that has already started: past days can be checked retroactively. */
     public function canCheck(Task $task, CarbonImmutable $day, CarbonImmutable $today): bool
     {
-        return $this->isScheduled($task, $day) && $day->betweenIncluded($today->startOfWeek(), $today);
+        return $task->isScheduledOn($day) && $day->betweenIncluded($today->startOfWeek(), $today);
     }
 
     private function score(Goal $goal, CarbonImmutable $weekStart): WeekScoreData
@@ -95,7 +95,7 @@ final class HabitWeekService
             $total += count($task->days_of_week ?? []);
             $done += $task->completions
                 ->filter(fn (Completion $completion): bool => $completion->completed_on->betweenIncluded($weekStart, $weekEnd)
-                    && $this->isScheduled($task, $completion->completed_on))
+                    && $task->isScheduledOn($completion->completed_on))
                 ->count();
         }
 
@@ -121,10 +121,5 @@ final class HabitWeekService
     private function localDate(?CarbonInterface $moment, string $timezone): CarbonImmutable
     {
         return CarbonImmutable::parse($moment?->setTimezone($timezone)->toDateString());
-    }
-
-    private function isScheduled(Task $task, CarbonInterface $day): bool
-    {
-        return in_array($day->dayOfWeekIso, $task->days_of_week ?? [], true);
     }
 }
