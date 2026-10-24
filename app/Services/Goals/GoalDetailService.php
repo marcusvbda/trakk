@@ -16,6 +16,9 @@ use App\Data\Goals\GoalOverviewData;
 use App\Data\Goals\GoalProgressData;
 use App\Data\Goals\GoalReminderData;
 use App\Data\Goals\HabitActionData;
+use App\Data\Goals\WeeklyProgressData;
+use App\Data\Goals\WeekScoreData;
+use App\Enums\LogKind;
 use App\Enums\ReminderChannel;
 use App\Enums\TaskStatus;
 use App\Models\Completion;
@@ -39,6 +42,7 @@ final class GoalDetailService
 
     public function __construct(
         private readonly GoalProgressService $progress,
+        private readonly HabitWeekService $weeks,
         private readonly PaceChartBuilder $paceChart,
         private readonly KanbanBuilder $kanban,
         private readonly TaskSheetBuilder $sheets,
@@ -67,6 +71,7 @@ final class GoalDetailService
             $goal->isHabit() ? $this->habitActions($goal, $today) : null,
             $goal->reminders->map(fn (Reminder $reminder): GoalReminderData => $this->reminder($reminder))->values()->all(),
             $this->history($goal, $today),
+            $goal->isHabit() ? $this->closedWeeks($goal, $today) : [],
         );
     }
 
@@ -131,7 +136,7 @@ final class GoalDetailService
                 $this->progress->plannedDayCount($goal),
                 'days',
                 null,
-                $this->progress->week($goal, $today),
+                $this->weeklyProgress($goal, $today),
             );
         }
 
@@ -166,17 +171,39 @@ final class GoalDetailService
                 $task->scheduled_time === null ? 'all day' : $this->labels->time($task->scheduled_time),
                 $task->points,
                 $this->weekLabel($task, $today),
-                $this->isDoneOn($task, $today),
+                $this->weeks->days($task, $today),
                 $this->sheets->build($task),
             ))
             ->values()
             ->all();
     }
 
-    private function isDoneOn(Task $task, CarbonImmutable $day): bool
+    private function weeklyProgress(Goal $goal, CarbonImmutable $today): WeeklyProgressData
     {
-        return $task->completions->contains(
-            fn (Completion $completion): bool => $completion->completed_on->isSameDay($day),
+        $score = $this->weeks->currentScore($goal, $today);
+
+        return new WeeklyProgressData($score->number, $score->doneCount, $score->totalCount, $score->percent());
+    }
+
+    /**
+     * @return list<LogEntryData>
+     */
+    private function closedWeeks(Goal $goal, CarbonImmutable $today): array
+    {
+        $played = array_filter(
+            $this->weeks->closedWeeks($goal, $today),
+            fn (WeekScoreData $week): bool => $week->totalCount > 0,
+        );
+
+        return array_map(
+            fn (WeekScoreData $week): LogEntryData => new LogEntryData(
+                -$week->number,
+                'week '.$week->number,
+                $week->doneCount === $week->totalCount ? LogKind::Done : LogKind::Warning,
+                $week->doneCount.' of '.$week->totalCount,
+                null,
+            ),
+            array_values($played),
         );
     }
 

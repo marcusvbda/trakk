@@ -10,7 +10,6 @@ import type {
     TaskSheet,
     TaskStatus,
 } from './trakk';
-import type { WeekProgress } from './dashboard';
 
 export type GoalLink = {
     title: string;
@@ -65,7 +64,14 @@ export type GoalProgress = {
     totalCount: number;
     unit: 'tasks' | 'days';
     counts: Record<TaskStatus, number> | null;
-    week: WeekProgress | null;
+    weekly: WeeklyProgress | null;
+};
+
+export type WeeklyProgress = {
+    weekNumber: number;
+    doneCount: number;
+    totalCount: number;
+    percent: number;
 };
 
 export type PaceChartPoint = {
@@ -88,6 +94,13 @@ export type PaceChartData = {
     caption: string | null;
 };
 
+export type HabitDay = {
+    date: string;
+    scheduled: boolean;
+    done: boolean;
+    canToggle: boolean;
+};
+
 export type HabitAction = {
     id: number;
     title: string;
@@ -95,7 +108,7 @@ export type HabitAction = {
     timeLabel: string;
     points: number;
     weekLabel: string;
-    isDoneToday: boolean;
+    weekDays: HabitDay[];
     task: TaskSheet;
 };
 
@@ -117,4 +130,5 @@ export type GoalDetailProps = {
     actions: HabitAction[] | null;
     reminders: GoalReminder[];
     history: LogEntry[];
+    weeks: LogEntry[];
 };
