@@ -257,3 +257,30 @@
         font-size: 16px;
     }
 }
+
+/* Comfort on phones: larger type tokens and touch targets of at least 36px */
+@media (max-width: 767px) {
+    :root {
+        --text-3xs: 11px;
+        --text-2xs: 11.5px;
+        --text-xs: 12px;
+        --text-sm: 12.5px;
+        --text-base: 14px;
+        --text-md: 14.5px;
+        --text-lg: 15.5px;
+    }
+
+    .h-7,
+    .h-8,
+    .h-9,
+    .h-\[26px\],
+    .h-\[34px\],
+    .min-h-8 {
+        min-height: 36px;
+    }
+
+    .size-7 {
+        min-width: 34px;
+        min-height: 34px;
+    }
+}
