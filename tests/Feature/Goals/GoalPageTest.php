@@ -213,6 +213,24 @@ describe('what the page carries', function () {
                 ->where('actions.0.weekLabel', '1/3 this week'));
     });
 
+    it('marks a habit action done today and lets it be logged on an unscheduled day', function () {
+        $this->travelTo(day('2026-10-24'));
+        $goal = Goal::factory()->for($this->user)->habit()->create();
+        $task = Task::factory()->for($goal)->recurring([1, 2, 3, 4, 5])->create();
+
+        $this->actingAs($this->user)
+            ->get(route('goals.show', $goal->slug))
+            ->assertInertia(fn (Assert $page) => $page->where('actions.0.isDoneToday', false));
+
+        $this->actingAs($this->user)->post(route('tasks.completions.store', $task))->assertRedirect();
+
+        $this->actingAs($this->user)
+            ->get(route('goals.show', $goal->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('actions.0.isDoneToday', true)
+                ->where('actions.0.weekLabel', '1/5 this week'));
+    });
+
     it('shows once-only reminders by date and recurring ones by time', function () {
         $goal = Goal::factory()->for($this->user)->create();
         Reminder::factory()->forGoal($goal)->onDays([1])->create(['label' => 'Alert', 'time' => '09:00']);

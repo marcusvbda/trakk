@@ -64,7 +64,7 @@ Every item below is a checklist entry for the sessions. "Source" is what produce
 | Pace chart | Actual series: 5 samples evenly spaced from start to today (always including both ends); percent at a sample day = progress computed with only completions/`completed_at` up to that day. Expected line, projection, current and required pace from PRODUCT.md. Month ticks. | — |
 | Progress panel | Percent, done/total, counts per status. Habits: hit days / planned days. | — |
 | Board (projects) | All tasks of the goal by status, ordered by `position`, overdue and tags flagged. | Advance / reopen → `PATCH /tasks/{task}/status`. Card click → task sheet. |
-| Actions (habits) | Replaces the board for habit goals: one row per recurring task: title, weekday chips (`M T W T F S S`, active in goal color), time, `+N`, this week's hits. Same panel style as the board. | Row click → task sheet. |
+| Actions (habits) | Replaces the board for habit goals: one row per recurring task: title, weekday chips (`M T W T F S S`, active in goal color), time, `+N`, this week's hits, and a checkbox for today. Same panel style as the board. | Checkbox → `POST /tasks/{task}/completions` (or `DELETE .../today`), on any day, scheduled or not. Row click → task sheet. |
 | Reminders for this goal | Goal-scoped reminders. | Row click → reminder sheet; header `+` → reminder sheet with goal preselected. |
 | History | Latest 20 activities for the goal. | — |
 

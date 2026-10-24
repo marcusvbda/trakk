@@ -166,10 +166,18 @@ final class GoalDetailService
                 $task->scheduled_time === null ? 'all day' : $this->labels->time($task->scheduled_time),
                 $task->points,
                 $this->weekLabel($task, $today),
+                $this->isDoneOn($task, $today),
                 $this->sheets->build($task),
             ))
             ->values()
             ->all();
+    }
+
+    private function isDoneOn(Task $task, CarbonImmutable $day): bool
+    {
+        return $task->completions->contains(
+            fn (Completion $completion): bool => $completion->completed_on->isSameDay($day),
+        );
     }
 
     private function weekLabel(Task $task, CarbonImmutable $today): string

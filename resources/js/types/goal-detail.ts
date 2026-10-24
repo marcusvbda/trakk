@@ -95,6 +95,7 @@ export type HabitAction = {
     timeLabel: string;
     points: number;
     weekLabel: string;
+    isDoneToday: boolean;
     task: TaskSheet;
 };
 

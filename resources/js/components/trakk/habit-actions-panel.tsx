@@ -1,10 +1,13 @@
+import { router } from '@inertiajs/react';
 import { EmptyState } from '@/components/trakk/empty-state';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
+import { TrakkCheckbox } from '@/components/ui/trakk-checkbox';
 import { TrakkButton } from '@/components/ui/trakk-button';
 import { useSheets } from '@/hooks/use-sheets';
 import { goalColorClass } from '@/lib/goal-color';
 import { cn } from '@/lib/utils';
+import { destroy as undoCompletion, store as completeTask } from '@/routes/tasks/completions';
 import type { GoalColor, HabitAction } from '@/types';
 
 const weekdays = [
@@ -50,6 +53,18 @@ function WeekdayChips({ days, color }: { days: number[]; color: GoalColor }) {
     );
 }
 
+function toggleToday(action: HabitAction): void {
+    const route = action.isDoneToday
+        ? undoCompletion(action.id)
+        : completeTask(action.id);
+
+    router.visit(route.url, {
+        method: route.method,
+        preserveScroll: true,
+        only: ['actions', 'progress', 'paceChart', 'goal', 'history'],
+    });
+}
+
 export function HabitActionsPanel({
     actions,
     color,
@@ -91,29 +106,46 @@ export function HabitActionsPanel({
             ) : (
                 <div className="flex flex-col">
                     {actions.map((action) => (
-                        <button
+                        <div
                             key={action.id}
-                            type="button"
-                            aria-label={`Edit action "${action.title}"`}
-                            onClick={() =>
-                                sheets.open({ kind: 'task', task: action.task })
-                            }
-                            className="flex min-h-11 animate-fade-in flex-wrap items-center gap-x-3 gap-y-1 rounded-control px-1.5 py-1 text-left transition-colors duration-150 hover:bg-hover"
+                            className="flex min-h-11 animate-fade-in items-center gap-2 rounded-control px-1.5 py-1 transition-colors duration-150 hover:bg-hover"
                         >
-                            <span className="min-w-0 flex-[1_1_200px] truncate text-base text-body">
-                                {action.title}
-                            </span>
-                            <WeekdayChips days={action.days} color={color} />
-                            <span className="w-[44px] flex-none font-mono text-xs text-muted">
-                                {action.timeLabel}
-                            </span>
-                            <span className="w-[26px] flex-none font-mono text-xs text-accent">
-                                +{action.points}
-                            </span>
-                            <span className="w-[96px] flex-none text-right font-mono text-xs whitespace-nowrap text-muted">
-                                {action.weekLabel}
-                            </span>
-                        </button>
+                            <button
+                                type="button"
+                                role="checkbox"
+                                aria-checked={action.isDoneToday}
+                                aria-label={`Mark "${action.title}" done today`}
+                                onClick={() => toggleToday(action)}
+                                className="group flex size-8 flex-none items-center justify-center"
+                            >
+                                <TrakkCheckbox checked={action.isDoneToday} />
+                            </button>
+                            <button
+                                type="button"
+                                aria-label={`Edit action "${action.title}"`}
+                                onClick={() =>
+                                    sheets.open({
+                                        kind: 'task',
+                                        task: action.task,
+                                    })
+                                }
+                                className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-left"
+                            >
+                                <span className="min-w-0 flex-[1_1_200px] truncate text-base text-body">
+                                    {action.title}
+                                </span>
+                                <WeekdayChips days={action.days} color={color} />
+                                <span className="w-[44px] flex-none font-mono text-xs text-muted">
+                                    {action.timeLabel}
+                                </span>
+                                <span className="w-[26px] flex-none font-mono text-xs text-accent">
+                                    +{action.points}
+                                </span>
+                                <span className="w-[96px] flex-none text-right font-mono text-xs whitespace-nowrap text-muted">
+                                    {action.weekLabel}
+                                </span>
+                            </button>
+                        </div>
                     ))}
                 </div>
             )}

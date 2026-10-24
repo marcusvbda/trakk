@@ -18,6 +18,7 @@ final readonly class HabitActionData
         public string $timeLabel,
         public int $points,
         public string $weekLabel,
+        public bool $isDoneToday,
         public TaskSheetData $task,
     ) {}
 }
