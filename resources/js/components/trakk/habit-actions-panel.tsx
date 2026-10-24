@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react';
 import { EmptyState } from '@/components/trakk/empty-state';
 import { Panel } from '@/components/ui/panel';
 import { PanelHeader } from '@/components/ui/panel-header';
+import { TrakkCheckbox } from '@/components/ui/trakk-checkbox';
 import { TrakkButton } from '@/components/ui/trakk-button';
 import { useSheets } from '@/hooks/use-sheets';
 import { goalColorClass } from '@/lib/goal-color';
@@ -22,28 +23,10 @@ const weekdays = [
     { letter: 'S', name: 'sunday' },
 ];
 
-function chipClassName(day: HabitDay, color: GoalColor): string {
-    if (day.done) {
-        return cn(
-            goalColorClass[color].bg,
-            goalColorClass[color].border,
-            'text-canvas',
-        );
-    }
-
-    if (day.canToggle) {
-        return 'border-line-strong text-body';
-    }
-
-    return day.scheduled
-        ? 'border-line-strong text-muted'
-        : 'border-line-strong text-faint';
-}
-
 const chipBase =
     'inline-flex size-[18px] items-center justify-center rounded-chip border font-mono text-2xs';
 
-function toggleDay(action: HabitAction, day: HabitDay): void {
+function toggleSlot(action: HabitAction, day: HabitDay): void {
     const options = { query: { on: day.date } };
     const route = day.done
         ? undoCompletion(action.id, options)
@@ -56,6 +39,12 @@ function toggleDay(action: HabitAction, day: HabitDay): void {
     });
 }
 
+function scheduledNames(action: HabitAction): string[] {
+    return action.weekDays.flatMap((day, index) =>
+        day.scheduled ? [weekdays[index].name] : [],
+    );
+}
+
 function WeekdayChips({
     action,
     color,
@@ -64,34 +53,67 @@ function WeekdayChips({
     color: GoalColor;
 }) {
     return (
-        <span role="group" aria-label="check days" className="flex gap-[3px]">
+        <span
+            role="img"
+            aria-label={`repeats on ${scheduledNames(action).join(', ')}`}
+            className="flex gap-[3px]"
+        >
+            {action.weekDays.map((day, index) => (
+                <span
+                    key={weekdays[index].name}
+                    className={cn(
+                        chipBase,
+                        day.scheduled
+                            ? cn(
+                                  goalColorClass[color].bg,
+                                  goalColorClass[color].border,
+                                  'text-canvas',
+                              )
+                            : 'border-line-strong text-faint',
+                    )}
+                >
+                    {weekdays[index].letter}
+                </span>
+            ))}
+        </span>
+    );
+}
+
+function SlotChecklist({ action }: { action: HabitAction }) {
+    return (
+        <span role="group" aria-label="done this week" className="flex gap-3">
             {action.weekDays.map((day, index) => {
-                const weekday = weekdays[index];
-                const className = cn(chipBase, chipClassName(day, color));
+                if (!day.scheduled) {
+                    return null;
+                }
+
+                const label = weekdays[index].name.slice(0, 3);
 
                 if (!day.canToggle) {
                     return (
                         <span
-                            key={weekday.name}
-                            role="img"
-                            aria-label={`${weekday.name}${day.scheduled ? ' not yet' : ' off'}`}
-                            className={className}
+                            key={day.date}
+                            title="not yet"
+                            className="flex min-h-8 items-center gap-1.5 font-mono text-xs text-faint"
                         >
-                            {weekday.letter}
+                            <TrakkCheckbox checked={false} />
+                            {label}
                         </span>
                     );
                 }
 
                 return (
                     <button
-                        key={weekday.name}
+                        key={day.date}
                         type="button"
-                        aria-pressed={day.done}
-                        aria-label={`${action.title}, ${weekday.name}`}
-                        onClick={() => toggleDay(action, day)}
-                        className={className}
+                        role="checkbox"
+                        aria-checked={day.done}
+                        aria-label={`${action.title}, ${weekdays[index].name} done`}
+                        onClick={() => toggleSlot(action, day)}
+                        className="group flex min-h-8 items-center gap-1.5 font-mono text-xs text-muted"
                     >
-                        {weekday.letter}
+                        <TrakkCheckbox checked={day.done} />
+                        {label}
                     </button>
                 );
             })}
@@ -160,6 +182,7 @@ export function HabitActionsPanel({
                                 </span>
                             </button>
                             <WeekdayChips action={action} color={color} />
+                            <SlotChecklist action={action} />
                             <span className="w-[44px] flex-none font-mono text-xs text-muted">
                                 {action.timeLabel}
                             </span>

@@ -211,7 +211,8 @@ final class GoalDetailService
     {
         $monday = $today->startOfWeek();
         $hits = $task->completions
-            ->filter(fn (Completion $completion): bool => $completion->completed_on->betweenIncluded($monday, $today))
+            ->filter(fn (Completion $completion): bool => $completion->completed_on->betweenIncluded($monday, $today)
+                && $task->isScheduledOn($completion->completed_on))
             ->count();
 
         return $hits.'/'.count($task->days_of_week ?? []).' this week';
