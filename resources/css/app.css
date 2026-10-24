@@ -257,3 +257,34 @@
         font-size: 16px;
     }
 }
+
+/* Comfort on phones: everything a little larger, touch targets at least 36px (41px once zoomed) */
+@media (max-width: 767px) {
+    :root {
+        --text-3xs: 10px;
+        --text-2xs: 10.5px;
+        --text-xs: 11px;
+        --text-sm: 11.5px;
+        --text-base: 13px;
+        --text-md: 13.5px;
+        --text-lg: 14.5px;
+    }
+
+    html {
+        zoom: 1.15;
+    }
+
+    .h-7,
+    .h-8,
+    .h-9,
+    .h-\[26px\],
+    .h-\[34px\],
+    .min-h-8 {
+        min-height: 36px;
+    }
+
+    .size-7 {
+        min-width: 32px;
+        min-height: 32px;
+    }
+}
