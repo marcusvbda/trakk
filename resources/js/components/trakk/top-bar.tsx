@@ -27,7 +27,7 @@ export function TopBar({
                 >
                     <LogoMark size={18} />
                     <span className="font-mono text-md font-medium tracking-[0.04em]">
-                        ~/{name.toLowerCase()}
+                        ~/{name}
                     </span>
                 </Link>
                 <Chip size="plain" tone="faint">
