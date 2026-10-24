@@ -65,7 +65,7 @@ describe('demo data relative to today', function () {
             ->and($paces['nomad-visa']->progress)->toBe(45)
             ->and($paces['nomad-visa']->delta)->toBe(-13)
             ->and($visa->tasks)->toHaveCount(20)
-            ->and($visa->tasks->countBy(fn (Task $task) => $task->status->value)->all())->toBe(['todo' => 9, 'doing' => 2, 'done' => 9]);
+            ->and($visa->tasks->countBy(fn (Task $task) => $task->status->value)->all())->toEqual(['todo' => 9, 'doing' => 2, 'done' => 9]);
     });
 
     it('has four overdue tasks, two of them from the nomad visa', function () {
