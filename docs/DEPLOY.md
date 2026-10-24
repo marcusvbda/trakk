@@ -23,7 +23,7 @@ internet ──443──▶ public Caddy of the VPS ──trakk_edge──▶ ap
 Trakk has **no proxy of its own**: ports 80/443 on this VPS belong to the Caddy of the `wpp-automation-n8n` project, which terminates HTTPS (certificates are issued automatically) and, thanks to the block in `docker/Caddyfile.edge`, forwards `trakk.mvbassalobre.com` to `trakk-app:8080`. It re-resolves the alias every 5s and retries another container while one is being replaced, which is what makes the rollout zero-downtime.
 
 - FrankenPHP runs in **classic mode** (one fresh PHP request per hit, like PHP-FPM). Octane is not installed.
-- `docker/Caddyfile` is the app's plain-HTTP config (`auto_https off`, `admin off`, long cache for `/build/assets/*`).
+- `docker/Caddyfile` is the app's plain-HTTP config (`auto_https off`, `admin off`, long cache for `/build/assets/*`, only for files that exist: never send the `immutable` header on a 404, or a missing hash during a rolling deploy stays cached in the browser and leaves the page blank until the cache is cleared).
 - The app trusts the proxy (`trustProxies(at: '*')`): only containers on `trakk_edge` can reach port 8080.
 - The compose project name is fixed to `trakk`, so containers, network and volumes are all prefixed `trakk_` and cannot collide with other projects.
 - The image is built from the repository on the VPS (`docker compose build app`). The `.env` lives only on the server and is never baked into the image.

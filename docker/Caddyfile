@@ -9,7 +9,11 @@
 	root * /app/public
 	encode zstd br gzip
 
-	@hashedAssets path /build/assets/*
+	# Only for files that exist: during a rolling deploy a container may not have the other release's hashes yet, and a cached 404 would keep the page blank for a year.
+	@hashedAssets {
+		path /build/assets/*
+		file {path}
+	}
 	header @hashedAssets Cache-Control "public, max-age=31536000, immutable"
 
 	php_server
