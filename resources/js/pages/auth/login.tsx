@@ -12,7 +12,7 @@ const throttleStatus = 429;
 
 export default function Login() {
     const { version } = usePage().props;
-    const form = useForm({ email: '', password: '' });
+    const form = useForm({ email: '', password: '', remember: true });
     const [localError, setLocalError] = useState<string | null>(null);
     const [throttleSeconds, setThrottleSeconds] = useState<number | null>(null);
 
