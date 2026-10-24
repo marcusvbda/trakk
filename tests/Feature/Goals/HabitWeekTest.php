@@ -36,6 +36,16 @@ describe('the weekly score', function () {
                 ->where('progress.weekly', ['weekNumber' => 1, 'doneCount' => 3, 'totalCount' => 6, 'percent' => 50]));
     });
 
+    it('ignores a check stored on a day the action is not scheduled', function () {
+        Completion::factory()->forTask($this->workout)->on(day('2026-10-24'))->create();
+
+        $this->actingAs($this->user)
+            ->get(route('goals.show', $this->goal->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('actions.0.weekLabel', '0/5 this week')
+                ->where('progress.weekly.doneCount', 0));
+    });
+
     it('closes the week on Sunday night and logs it with the next week open', function () {
         Completion::factory()->forTask($this->workout)->on(day('2026-10-20'))->create();
         Completion::factory()->forTask($this->workout)->on(day('2026-10-21'))->create();
