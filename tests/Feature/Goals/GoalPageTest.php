@@ -103,7 +103,7 @@ describe('with the demo data', function () {
                 ->has('progress.week.days', 7)
                 ->where('paceChart.paceUnit', 'days/wk')
                 ->has('actions.0', fn (Assert $action) => $action
-                    ->hasAll(['id', 'title', 'days', 'timeLabel', 'points', 'weekLabel', 'task'])));
+                    ->hasAll(['id', 'title', 'days', 'timeLabel', 'points', 'weekLabel', 'isDoneToday', 'task'])));
     });
 
     it('builds the page in a fixed number of queries', function () {

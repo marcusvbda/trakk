@@ -38,6 +38,7 @@ export type TodayAction = {
     timeLabel: string;
     isDueToday: boolean;
     isDone: boolean;
+    daysLate: number;
 };
 
 export type OverdueItem = {

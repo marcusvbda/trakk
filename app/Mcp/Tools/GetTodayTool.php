@@ -28,7 +28,7 @@ final class GetTodayTool extends TrakkTool
         $lines = [
             strtolower($today->format('D, d M Y')).' · '.$dashboard->pointsToday.'/'.$dashboard->dailyTarget.' pts',
             $dashboard->actions === [] ? 'today: nothing scheduled' : 'today:',
-            ...array_map(fn (TodayActionData $action): string => sprintf('- [%d] %s%s · %s · +%d', $action->id, $action->isDone ? '(done) ' : '', $action->title, $action->timeLabel, $action->points), $dashboard->actions),
+            ...array_map(fn (TodayActionData $action): string => sprintf('- [%d] %s%s · %s · +%d%s', $action->id, $action->isDone ? '(done) ' : '', $action->title, $action->timeLabel, $action->points, $action->daysLate > 0 && ! $action->isDone ? " · {$action->daysLate}d late" : ''), $dashboard->actions),
         ];
 
         if ($dashboard->overdue !== []) {

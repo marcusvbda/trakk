@@ -41,7 +41,7 @@ describe('build', function () {
     it('lists recurring tasks scheduled for the weekday, one-off tasks due today and one-off tasks in doing', function () {
         $tasks = [
             todayTask('daily', ['days_of_week' => [1, 2, 3, 4, 5, 6, 7]]),
-            todayTask('mondays', ['days_of_week' => [1]]),
+            todayTask('saturdays', ['days_of_week' => [6]]),
             todayTask('due today', ['due_date' => day('2026-10-23')]),
             todayTask('due tomorrow', ['due_date' => day('2026-10-24')]),
             todayTask('in progress', ['status' => TaskStatus::Doing]),
@@ -86,5 +86,56 @@ describe('build', function () {
             ->and($actions['due']->timeLabel)->toBe('today')
             ->and($actions['due']->isDueToday)->toBeTrue()
             ->and($actions['doing']->timeLabel)->toBe('anytime');
+    });
+});
+
+describe('late recurring tasks', function () {
+    /**
+     * @return array<string, int>
+     */
+    function lateDays(Task $task): array
+    {
+        return collect(app(TodayListBuilder::class)->build(Collection::make([$task]), day('2026-10-23')))
+            ->mapWithKeys(fn ($action): array => [$action->title => $action->daysLate])
+            ->all();
+    }
+
+    it('keeps a task unchecked since an earlier scheduled day of the week, counting days late', function () {
+        $task = todayTask('monday habit', ['days_of_week' => [1]]);
+
+        expect(lateDays($task))->toBe(['monday habit' => 4]);
+    });
+
+    it('is not late when today is the first scheduled day or the task was checked since', function (array $days, array $completedOn) {
+        $task = todayTask('habit', ['days_of_week' => $days], completedOn: $completedOn);
+
+        expect(lateDays($task)['habit'] ?? 0)->toBe(0);
+    })->with([
+        'scheduled today only' => [[5], []],
+        'checked on the scheduled day' => [[1], ['2026-10-19']],
+        'checked on a later day' => [[1], ['2026-10-21']],
+        'scheduled day was last week' => [[7], []],
+    ]);
+
+    it('measures lateness from the oldest scheduled day not covered by a check', function () {
+        $task = todayTask('habit', ['days_of_week' => [1, 3]], completedOn: ['2026-10-19']);
+
+        expect(lateDays($task))->toBe(['habit' => 2]);
+    });
+
+    it('is not late for days before the task existed', function () {
+        $task = todayTask('new habit', ['days_of_week' => [1]]);
+        $task->created_at = day('2026-10-21');
+
+        expect(lateDays($task))->toBe([]);
+    });
+
+    it('keeps a task checked today in the list even on an unscheduled day', function () {
+        $task = todayTask('extra', ['days_of_week' => [1]], completedOn: ['2026-10-23']);
+        $actions = app(TodayListBuilder::class)->build(Collection::make([$task]), day('2026-10-23'));
+
+        expect($actions)->toHaveCount(1)
+            ->and($actions[0]->isDone)->toBeTrue()
+            ->and($actions[0]->daysLate)->toBe(0);
     });
 });

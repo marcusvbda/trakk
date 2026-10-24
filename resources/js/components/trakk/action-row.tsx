@@ -1,4 +1,4 @@
-import { formatPoints } from '@/lib/format';
+import { formatLate, formatPoints } from '@/lib/format';
 import { goalColorClass } from '@/lib/goal-color';
 import { cn } from '@/lib/utils';
 import { TrakkCheckbox } from '@/components/ui/trakk-checkbox';
@@ -39,6 +39,11 @@ export function ActionRow({
                     {action.isDueToday && !action.isDone && (
                         <span className="tracking-[0.08em] text-warning">
                             · DUE TODAY
+                        </span>
+                    )}
+                    {action.daysLate > 0 && !action.isDone && (
+                        <span className="tracking-[0.08em] text-danger">
+                            · LATE {formatLate(action.daysLate)}
                         </span>
                     )}
                 </span>

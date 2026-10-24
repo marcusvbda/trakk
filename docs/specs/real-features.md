@@ -42,7 +42,7 @@ Every item below is a checklist entry for the sessions. "Source" is what produce
 | Panel | Source | Actions |
 | --- | --- | --- |
 | KPI strip (6 cards) | `DashboardService` using `ScoreService`, `StreakService`, `GoalProgressService`, task queries. Rules in PRODUCT.md → KPIs. | — |
-| Today | Today list rule (PRODUCT.md → Tasks). `timeLabel`: `HH:MM` if `scheduled_time`; `today` if one-off due today; `all day` for a recurring task without time; `anytime` for a `doing` task without due date. `isDueToday` for one-off due today. | Check / uncheck → `POST /tasks/{task}/completions` / `DELETE /tasks/{task}/completions/today`. Optimistic, partial reload `only: [kpis, actions, pointsChart, consistency, goals, focusProject, log, status]`. |
+| Today | Today list rule (PRODUCT.md → Tasks). `timeLabel`: `HH:MM` if `scheduled_time`; `today` if one-off due today; `all day` for a recurring task without time; `anytime` for a `doing` task without due date. `isDueToday` for one-off due today; `daysLate` > 0 for a late habit action (PRODUCT.md → Late habit action), shown as `LATE −Nd`. | Check / uncheck → `POST /tasks/{task}/completions` / `DELETE /tasks/{task}/completions/today`. Optimistic, partial reload `only: [kpis, actions, pointsChart, consistency, goals, focusProject, log, status]`. |
 | Overdue | One-off tasks not done with `due_date < today`, sorted by days late desc. | `replan` → replan sheet. |
 | Suggestion | `SuggestionService` (rule below). Not rendered when nothing is overdue; the Overdue empty state covers it. | — |
 | Next 7 days | One-off tasks not done with due date in `(today, today+7]`, plus active goals whose `due_date` falls in that window (`goal deadline`). `dayLabel` = `SAT 24`. | Click → goal page. |

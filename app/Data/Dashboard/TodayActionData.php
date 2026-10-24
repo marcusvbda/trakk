@@ -17,5 +17,6 @@ final readonly class TodayActionData
         public string $timeLabel,
         public bool $isDueToday,
         public bool $isDone,
+        public int $daysLate,
     ) {}
 }
