@@ -68,7 +68,7 @@ export function PaceChart({
     const goalColor = goalColorClass[color];
 
     return (
-        <Panel aria-labelledby="h-pace" className="flex-[1.6_1_490px]">
+        <Panel aria-labelledby="h-pace" className="flex-[2_1_490px]">
             <PanelHeader
                 id="h-pace"
                 title="Pace · actual vs expected"

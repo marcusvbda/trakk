@@ -37,7 +37,7 @@ export function GoalProgressPanel({
     return (
         <Panel
             aria-labelledby="h-progress"
-            className="flex flex-[0.8_1_270px] flex-col gap-3.5"
+            className="flex flex-[1_1_270px] flex-col gap-3.5"
         >
             <PanelHeader id="h-progress" title="Progress" className="mb-0" />
             <div className="flex items-baseline gap-1.5">

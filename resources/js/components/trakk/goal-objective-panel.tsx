@@ -20,7 +20,7 @@ export function GoalObjectivePanel({
     return (
         <Panel
             aria-labelledby="h-objective"
-            className="flex flex-[1_1_330px] flex-col gap-3"
+            className="flex flex-[1.25_1_330px] flex-col gap-3"
         >
             <PanelHeader id="h-objective" title="Objective" className="mb-0" />
             {text ? (
