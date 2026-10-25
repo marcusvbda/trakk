@@ -8,8 +8,11 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import TrakkLayout from '@/layouts/trakk-layout';
+import { reloadOnStaleChunk } from '@/lib/reload-on-stale-chunk';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Trakk';
+
+reloadOnStaleChunk();
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
