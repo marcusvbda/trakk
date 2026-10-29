@@ -94,9 +94,25 @@ export default function GoalShow(props: GoalDetailProps) {
                         title="Board"
                         count={`${progress.totalCount} tasks`}
                     >
-                        <span className="font-mono text-xs text-muted">
-                            → advance · ↺ reopen
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs text-muted">
+                                → advance · ↺ reopen
+                            </span>
+                            {progress.totalCount > 0 && (
+                                <TrakkButton
+                                    size="icon"
+                                    aria-label="Add task to this goal"
+                                    onClick={() =>
+                                        sheets.open({
+                                            kind: 'task',
+                                            goalSlug: goal.slug,
+                                        })
+                                    }
+                                >
+                                    +
+                                </TrakkButton>
+                            )}
+                        </div>
                     </PanelHeader>
                     {progress.totalCount === 0 ? (
                         <EmptyState
